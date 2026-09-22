@@ -1,4 +1,4 @@
-import { useEffect, useState } from 'react';
+import { useState } from 'react';
 import { View } from '../components/View';
 import { Icon } from '../components/Icon';
 import { useToast } from '../contexts/ToastContext';
@@ -22,10 +22,6 @@ export function FacilitatorReview({ submissions, onDecide }: FacilitatorReviewPr
   const [selectedId, setSelectedId] = useState(firstPending?.id ?? '');
   const current = submissions.find((s) => s.id === selectedId) ?? submissions[0];
   const [feedback, setFeedback] = useState(current?.feedback ?? '');
-
-  useEffect(() => {
-    setFeedback(current?.feedback ?? '');
-  }, [current?.id, current?.feedback]);
 
   if (!current) return null;
 
@@ -63,7 +59,10 @@ export function FacilitatorReview({ submissions, onDecide }: FacilitatorReviewPr
               type="button"
               className={courseListButton}
               aria-pressed={s.id === current.id}
-              onClick={() => setSelectedId(s.id)}>
+              onClick={() => {
+                setSelectedId(s.id);
+                setFeedback(s.feedback ?? '');
+              }}>
               
                 <b>{s.student}</b>
                 <span className={s.status === 'pending' ? undefined : '!text-foreground'}>

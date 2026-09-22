@@ -1,12 +1,13 @@
 import React from 'react';
 import { View } from '../components/View';
 import { ProgressRing } from '../components/ProgressRing';
-import { ASSIGNED_COURSES, CLASS_ACTIVITIES, ROSTER } from '../data/lms';
+import { CLASS_ACTIVITIES, ROSTER } from '../data/lms';
 import { useToast } from '../contexts/ToastContext';
-import type { RosterStudent } from '../types/lms';
+import type { AssignedCourse, RosterStudent } from '../types/lms';
 import { agenda, art, artTone, buttonGhostSmall, buttonSmall, heading, homeGrid, linkButton, muted, pin, progressBar, row, status as baseStatus, statusMiss, statusSoft, tile, tileBody, tiles } from '../styles';
 
 interface FacilitatorTeachingProps {
+  assignedCourses: AssignedCourse[];
   pending: number;
   finalProjects: number;
   onOpenReview: () => void;
@@ -19,12 +20,13 @@ function statusClass(status: RosterStudent['status']) {
 }
 
 export function FacilitatorTeaching({
+  assignedCourses,
   pending,
   finalProjects,
   onOpenReview
 }: FacilitatorTeachingProps) {
   const { toast } = useToast();
-  const students = ASSIGNED_COURSES.reduce((n, c) => n + c.students, 0);
+  const students = assignedCourses.reduce((n, c) => n + c.students, 0);
 
   return (
     <View>
@@ -41,7 +43,7 @@ export function FacilitatorTeaching({
             'Every final project is cleared. What is left are assignments and checkpoints.'}
           </p>
           <div className="mt-5 flex flex-wrap gap-2 [&>span]:rounded-[99px] [&>span]:bg-black/20 [&>span]:px-[13px] [&>span]:py-1.5 [&>span]:text-[13.5px] [&>span]:font-[550]">
-            <span>{ASSIGNED_COURSES.length} assigned courses</span>
+            <span>{assignedCourses.length} assigned courses</span>
             <span>{students} students</span>
             <span>Cohort 7</span>
           </div>
@@ -59,7 +61,7 @@ export function FacilitatorTeaching({
         <section>
           <h3 className={heading}>Assigned courses</h3>
           <div className={`${tiles} mb-9`}>
-            {ASSIGNED_COURSES.map((c) =>
+            {assignedCourses.map((c) =>
             <div key={c.id} className={tile}>
                 <span className={`${art} ${artTone[c.art]}`} aria-hidden="true">
                   {c.g}

@@ -1,39 +1,181 @@
-import { useMemo, useState } from 'react';
-import { Icon } from '../components/Icon';
-import { View } from '../components/View';
-import { useToast } from '../contexts/ToastContext';
-import { button, buttonGhostSmall, fieldLabel, selectInput, table, tableWrap, tabButton, tabs, textInput } from '../styles';
+import { useMemo, useState, type FormEvent } from "react";
+import { Icon } from "../components/Icon";
+import { Modal } from "../components/ui/Modal";
+import { PageHeader } from "../components/ui/PageHeader";
+import { View } from "../components/View";
+import { useToast } from "../contexts/ToastContext";
+import { useWorkspace } from "../features/workspace/useWorkspace";
+import { downloadCsv } from "../utils/csv";
+import type { FacilitatorRecord, ManagedCourse } from "../types/workspace";
+import {
+  button,
+  buttonGhostSmall,
+  fieldLabel,
+  selectInput,
+  table,
+  tableWrap,
+  tabButton,
+  tabs,
+  textInput,
+} from "../styles";
 
-type PeopleTab = 'students' | 'facilitators';
+type PeopleTab = "students" | "facilitators";
 
-const students = [
-  ['Ngozi Eze', 'ngozi@circlehq.co', 'Cohort 7', '2 active', 'On track', 'Today'],
-  ['Chidera Nwosu', 'chidera@circlehq.co', 'Cohort 7', '1 active', 'At risk', '3 days ago'],
-  ['Femi Balogun', 'femi@circlehq.co', 'Cohort 7', '1 active', 'Behind', 'Yesterday'],
-  ['Amina Yusuf', 'amina@circlehq.co', 'Cohort 7', '2 active', 'Revision due', 'Today'],
-  ['Tunde Bakare', 'tunde@circlehq.co', 'Cohort 7', '1 active', 'On track', 'Today'],
-];
-
-const facilitators = [
-  ['Kemi Adeyemi', 'kemi@circlehq.co', '2 courses', '43 students', '3 reviews', 'Today'],
-  ['Dr. Amaka Obi', 'amaka@circlehq.co', '3 courses', '61 students', '0 reviews', 'Today'],
-  ['Ife Okoro', 'ife@circlehq.co', '1 course', '18 students', '1 review', 'Yesterday'],
-];
+function initials(name: string) {
+  return name.split(" ").map((part) => part[0]).join("").slice(0, 2).toUpperCase();
+}
 
 export function AdminPeople() {
   const { toast } = useToast();
-  const [tab, setTab] = useState<PeopleTab>('students');
-  const [query, setQuery] = useState('');
+  const { students, facilitators, courses, cohorts, saveStudent, saveFacilitator } = useWorkspace();
+  const [tab, setTab] = useState<PeopleTab>("students");
+  const [query, setQuery] = useState("");
   const [inviteOpen, setInviteOpen] = useState(false);
-  const rows = useMemo(() => (tab === 'students' ? students : facilitators).filter((row) => row[0].toLowerCase().includes(query.toLowerCase()) || row[1].includes(query.toLowerCase())), [query, tab]);
+  const [managedFacilitator, setManagedFacilitator] = useState<FacilitatorRecord | null>(null);
 
-  return <View>
-    <div className="mb-5 flex flex-wrap items-center justify-between gap-4"><p className="max-w-[62ch] text-muted">Manage access, enrolment, course assignments, progress visibility, and account status.</p><button className={button} type="button" onClick={() => setInviteOpen(true)}><Icon name="plus" />Invite {tab === 'students' ? 'student' : 'facilitator'}</button></div>
-    <div className={tabs} role="tablist"><button className={tabButton} type="button" role="tab" aria-selected={tab === 'students'} onClick={() => setTab('students')}>Students · 248</button><button className={tabButton} type="button" role="tab" aria-selected={tab === 'facilitators'} onClick={() => setTab('facilitators')}>Facilitators · 12</button></div>
-    <div className="my-5 flex flex-wrap gap-3"><label className="relative min-w-[240px] flex-1"><Icon name="search" className="absolute top-1/2 left-3.5 size-4 -translate-y-1/2 text-muted" /><input className={`${textInput} w-full pl-10`} placeholder={`Search ${tab}`} value={query} onChange={(e) => setQuery(e.target.value)} /></label><select className={`${selectInput} w-auto min-w-[150px]`}><option>All cohorts</option><option>Cohort 7</option><option>Cohort 6</option><option>Self-paced</option></select><button className={buttonGhostSmall} type="button" onClick={() => toast('People list exported as CSV.')}>Export</button></div>
+  const visibleStudents = useMemo(
+    () => students.filter((student) => `${student.name} ${student.email}`.toLowerCase().includes(query.toLowerCase())),
+    [query, students],
+  );
+  const visibleFacilitators = useMemo(
+    () => facilitators.filter((facilitator) => `${facilitator.name} ${facilitator.email}`.toLowerCase().includes(query.toLowerCase())),
+    [facilitators, query],
+  );
 
-    <div className={tableWrap}><table className={table}><thead><tr><th>{tab === 'students' ? 'Student' : 'Facilitator'}</th><th>Email</th><th>{tab === 'students' ? 'Cohort' : 'Courses'}</th><th>{tab === 'students' ? 'Enrolment' : 'Students'}</th><th>{tab === 'students' ? 'Learning status' : 'Review queue'}</th><th>Last active</th><th><span className="sr-only">Actions</span></th></tr></thead><tbody>{rows.map((row) => <tr key={row[1]}><td><div className="flex items-center gap-3"><span className="grid size-9 shrink-0 place-items-center rounded-full bg-hq-red-ink text-xs font-bold text-hq-bone">{row[0].split(' ').map((part) => part[0]).join('')}</span><b>{row[0]}</b></div></td><td>{row[1]}</td><td>{row[2]}</td><td>{row[3]}</td><td><span className="rounded-[99px] bg-surface-2 px-2.5 py-1 text-xs font-semibold">{row[4]}</span></td><td>{row[5]}</td><td><button className="grid size-9 place-items-center rounded-full hover:bg-surface-2" type="button" aria-label={`Manage ${row[0]}`} onClick={() => toast(`${row[0]}'s profile opened.`)}><Icon name="more" /></button></td></tr>)}</tbody></table></div>
+  const invite = (event: FormEvent<HTMLFormElement>) => {
+    event.preventDefault();
+    const form = new FormData(event.currentTarget);
+    const name = String(form.get("name") ?? "").trim();
+    const email = String(form.get("email") ?? "").trim();
+    const courseIds = form.getAll("courseIds").map(String);
 
-    {inviteOpen && <div className="fixed inset-0 z-50 grid place-items-center bg-black/45 p-4" role="dialog" aria-modal="true" aria-label={`Invite ${tab === 'students' ? 'student' : 'facilitator'}`}><form className="w-full max-w-[520px] rounded-[22px] bg-background p-6 shadow-2xl" onSubmit={(e) => { e.preventDefault(); setInviteOpen(false); toast('Invitation sent.'); }}><div className="flex items-start justify-between gap-4"><div><h2 className="text-2xl font-[700]">Invite {tab === 'students' ? 'a student' : 'a facilitator'}</h2><p className="mt-1 text-sm text-muted">They receive a secure link to create their account.</p></div><button className="grid size-9 place-items-center rounded-full hover:bg-surface-2" type="button" aria-label="Close" onClick={() => setInviteOpen(false)}><Icon name="x" /></button></div><div className="mt-6 grid gap-4"><div><label className={fieldLabel}>Full name</label><input className={`${textInput} w-full`} required /></div><div><label className={fieldLabel}>Email address</label><input className={`${textInput} w-full`} type="email" required /></div>{tab === 'students' ? <><div><label className={fieldLabel}>Cohort</label><select className={selectInput}><option>Cohort 7</option><option>Cohort 8</option><option>Self-paced</option></select></div><div><label className={fieldLabel}>Enrol in courses</label><select className={selectInput} multiple size={3}><option>Advanced React Patterns</option><option>TypeScript for Product Teams</option><option>Design Systems with Tailwind</option></select></div></> : <><div><label className={fieldLabel}>Assign courses</label><select className={selectInput} multiple size={3}><option>Advanced React Patterns</option><option>TypeScript for Product Teams</option><option>Product Discovery Sprint</option></select></div><label className="flex gap-3 text-sm"><input type="checkbox" defaultChecked className="accent-[var(--accent)]" />Allow assessment grading and submission approval.</label></>}<button className={`${button} mt-2 w-full`} type="submit"><Icon name="mail" />Send invitation</button></div></form></div>}
-  </View>;
+    if (tab === "facilitators") {
+      saveFacilitator({ name, email, courseIds, canGrade: form.get("canGrade") === "on" });
+      toast(`${name} was invited and assigned to ${courseIds.length} course${courseIds.length === 1 ? "" : "s"}.`);
+    } else {
+      saveStudent({ name, email, cohortId: String(form.get("cohortId") ?? ""), courseIds });
+      toast(`${name} was invited and enrolled.`);
+    }
+    setInviteOpen(false);
+  };
+
+  const updateFacilitator = (event: FormEvent<HTMLFormElement>) => {
+    event.preventDefault();
+    if (!managedFacilitator) return;
+    const form = new FormData(event.currentTarget);
+    saveFacilitator({
+      id: managedFacilitator.id,
+      name: String(form.get("name") ?? managedFacilitator.name),
+      email: String(form.get("email") ?? managedFacilitator.email),
+      courseIds: form.getAll("courseIds").map(String),
+      canGrade: form.get("canGrade") === "on",
+    });
+    toast("Facilitator access and course assignments updated.");
+    setManagedFacilitator(null);
+  };
+
+  const exportPeople = () => {
+    const rows = tab === "students"
+      ? [["Name", "Email", "Cohort", "Courses", "Status"], ...students.map((student) => [student.name, student.email, cohorts.find((cohort) => cohort.id === student.cohortId)?.name ?? "", student.courseIds.length, student.learningStatus])]
+      : [["Name", "Email", "Courses", "Can grade", "Status"], ...facilitators.map((facilitator) => [facilitator.name, facilitator.email, facilitator.courseIds.length, facilitator.canGrade ? "Yes" : "No", facilitator.status])];
+    downloadCsv(`hq-learn-${tab}.csv`, rows);
+    toast("CSV export downloaded.");
+  };
+
+  return (
+    <View>
+      <PageHeader
+        description="Invite people, control platform access, and connect every student and facilitator to the courses they manage."
+        actionLabel={`Invite ${tab === "students" ? "student" : "facilitator"}`}
+        onAction={() => setInviteOpen(true)}
+      />
+
+      <div className={tabs} role="tablist">
+        <button className={tabButton} type="button" role="tab" aria-selected={tab === "students"} onClick={() => setTab("students")}>Students · {students.length}</button>
+        <button className={tabButton} type="button" role="tab" aria-selected={tab === "facilitators"} onClick={() => setTab("facilitators")}>Facilitators · {facilitators.length}</button>
+      </div>
+
+      <div className="my-5 flex flex-wrap gap-3">
+        <label className="relative min-w-[240px] flex-1">
+          <span className="sr-only">Search {tab}</span>
+          <Icon name="search" className="absolute top-1/2 left-3.5 size-4 -translate-y-1/2 text-muted" />
+          <input className={`${textInput} w-full pl-10`} placeholder={`Search ${tab}`} value={query} onChange={(event) => setQuery(event.target.value)} />
+        </label>
+        <button className={buttonGhostSmall} type="button" onClick={exportPeople}>Export CSV</button>
+      </div>
+
+      <div className={tableWrap}>
+        <table className={table}>
+          <thead><tr><th>{tab === "students" ? "Student" : "Facilitator"}</th><th>Email</th><th>{tab === "students" ? "Cohort" : "Assigned courses"}</th><th>{tab === "students" ? "Enrolment" : "Students"}</th><th>Status</th><th>Last active</th><th><span className="sr-only">Actions</span></th></tr></thead>
+          <tbody>
+            {tab === "students" ? visibleStudents.map((student) => (
+              <tr key={student.id}>
+                <td><Person name={student.name} /></td><td>{student.email}</td><td>{cohorts.find((cohort) => cohort.id === student.cohortId)?.name ?? "Self-paced"}</td><td>{student.courseIds.length} active</td><td><StatusPill>{student.learningStatus}</StatusPill></td><td>{student.lastActive}</td><td><button className={buttonGhostSmall} type="button" onClick={() => toast(`${student.name}'s learner profile opened.`)}>View</button></td>
+              </tr>
+            )) : visibleFacilitators.map((facilitator) => {
+              const assigned = courses.filter((course) => facilitator.courseIds.includes(course.id));
+              return (
+                <tr key={facilitator.id}>
+                  <td><Person name={facilitator.name} /></td><td>{facilitator.email}</td><td className="max-w-64">{assigned.length ? assigned.map((course) => course.title).join(", ") : "Unassigned"}</td><td>{assigned.reduce((total, course) => total + course.students, 0)}</td><td><StatusPill>{facilitator.status}</StatusPill></td><td>{facilitator.lastActive}</td><td><button className={buttonGhostSmall} type="button" onClick={() => setManagedFacilitator(facilitator)}>Manage</button></td>
+                </tr>
+              );
+            })}
+          </tbody>
+        </table>
+      </div>
+
+      {inviteOpen ? (
+        <Modal title={`Invite a ${tab === "students" ? "student" : "facilitator"}`} subtitle="Create the platform account and connect it to the right learning workspace." onClose={() => setInviteOpen(false)}>
+          <form className="grid gap-4" onSubmit={invite}>
+            <TextField name="name" label="Full name" />
+            <TextField name="email" label="Email address" type="email" />
+            {tab === "students" ? <div><label className={fieldLabel} htmlFor="invite-cohort">Cohort</label><select id="invite-cohort" name="cohortId" className={selectInput} required>{cohorts.filter((cohort) => cohort.status !== "Archived").map((cohort) => <option key={cohort.id} value={cohort.id}>{cohort.name}</option>)}</select></div> : null}
+            <CourseAssignmentField courses={courses} />
+            {tab === "facilitators" ? <label className="flex gap-3 text-sm"><input name="canGrade" type="checkbox" defaultChecked className="accent-[var(--accent)]" />Allow assessment grading and submission approval.</label> : null}
+            <button className={`${button} mt-2 w-full`} type="submit"><Icon name="mail" />Send invitation</button>
+          </form>
+        </Modal>
+      ) : null}
+
+      {managedFacilitator ? (
+        <Modal title={`Manage ${managedFacilitator.name}`} subtitle="Update profile permissions and the courses this facilitator can manage." onClose={() => setManagedFacilitator(null)}>
+          <form className="grid gap-4" onSubmit={updateFacilitator}>
+            <TextField name="name" label="Full name" defaultValue={managedFacilitator.name} />
+            <TextField name="email" label="Email address" type="email" defaultValue={managedFacilitator.email} />
+            <CourseAssignmentField courses={courses} selectedIds={managedFacilitator.courseIds} />
+            <label className="flex gap-3 text-sm"><input name="canGrade" type="checkbox" defaultChecked={managedFacilitator.canGrade} className="accent-[var(--accent)]" />Allow assessment grading and submission approval.</label>
+            <button className={`${button} mt-2 w-full`} type="submit">Save facilitator</button>
+          </form>
+        </Modal>
+      ) : null}
+    </View>
+  );
+}
+
+function Person({ name }: { name: string }) {
+  return <div className="flex items-center gap-3"><span className="grid size-9 shrink-0 place-items-center rounded-full bg-hq-red-ink text-xs font-bold text-hq-bone">{initials(name)}</span><b>{name}</b></div>;
+}
+
+function StatusPill({ children }: { children: string }) {
+  return <span className="rounded-[99px] bg-surface-2 px-2.5 py-1 text-xs font-semibold">{children}</span>;
+}
+
+function TextField({ name, label, type = "text", defaultValue }: { name: string; label: string; type?: string; defaultValue?: string }) {
+  return <div><label className={fieldLabel} htmlFor={`people-${name}`}>{label}</label><input id={`people-${name}`} name={name} className={`${textInput} w-full`} type={type} defaultValue={defaultValue} required /></div>;
+}
+
+function CourseAssignmentField({ courses, selectedIds = [] }: { courses: ManagedCourse[]; selectedIds?: string[] }) {
+  return (
+    <fieldset>
+      <legend className={fieldLabel}>Course assignments</legend>
+      <div className="grid max-h-48 gap-2 overflow-y-auto rounded-xl border border-line p-3">
+        {courses.filter((course) => course.status !== "Archived").map((course) => (
+          <label key={course.id} className="flex items-start gap-3 rounded-lg p-2 text-sm hover:bg-surface-2">
+            <input name="courseIds" value={course.id} type="checkbox" defaultChecked={selectedIds.includes(course.id)} className="mt-0.5 accent-[var(--accent)]" />
+            <span><b className="block">{course.title}</b><span className="text-xs text-muted">{course.status} · {course.modules.length} modules</span></span>
+          </label>
+        ))}
+      </div>
+    </fieldset>
+  );
 }

@@ -4,7 +4,6 @@ import type {
   ClassActivity,
   Course,
   CourseModule,
-  NavItem,
   Note,
   QuizQuestion,
   Replay,
@@ -56,36 +55,6 @@ export const ANNOUNCEMENTS: Announcement[] = [
 { t: 'Mid-course exam opens Friday at 9:00 am. 60 minutes, one attempt.', m: 'Yesterday', unread: true },
 { t: 'Week 5 replays are now available.', m: 'Mon 14 Sep', unread: false }];
 
-
-export const NAV: Record<Role, NavItem[]> = {
-  student: [
-  { id: 'home', label: 'Home', icon: 'home' },
-  { id: 'courses', label: 'Courses', icon: 'book' },
-  { id: 'live', label: 'Live & Replays', icon: 'video' },
-  { id: 'assignments', label: 'Assignments', icon: 'inbox' },
-  { id: 'study', label: 'Study', icon: 'pen' },
-  { id: 'certs', label: 'Certificates', icon: 'award' }],
-
-  facilitator: [
-  { id: 'teaching', label: 'Teaching', icon: 'users' },
-  { id: 'review', label: 'Review queue', icon: 'inbox' },
-  { id: 'facilitatorStudents', label: 'Students', icon: 'users' },
-  { id: 'results', label: 'Results', icon: 'chart' },
-  { id: 'facilitatorClasses', label: 'Classes', icon: 'video' }],
-
-  admin: [
-  { id: 'overview', label: 'Overview', icon: 'chart' },
-  { id: 'adminCourses', label: 'Courses', icon: 'book' },
-  { id: 'people', label: 'People', icon: 'users' },
-  { id: 'cohorts', label: 'Cohorts', icon: 'users' },
-  { id: 'content', label: 'Content', icon: 'upload' },
-  { id: 'adminClasses', label: 'Classes', icon: 'video' },
-  { id: 'assessments', label: 'Assessments', icon: 'pen' },
-  { id: 'projects', label: 'Projects', icon: 'inbox' },
-  { id: 'adminCerts', label: 'Certificates', icon: 'award' },
-  { id: 'recs', label: 'Recordings', icon: 'upload' }]
-
-};
 
 export const TITLES: Record<ViewId, string> = {
   home: 'Welcome back, Ngozi',

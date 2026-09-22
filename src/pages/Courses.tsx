@@ -1,17 +1,18 @@
 import React from 'react';
 import { View } from '../components/View';
-import { COURSES } from '../data/lms';
+import type { Course } from '../types/lms';
 import { art, artTone, progressBar, tag, tile, tileBody, tiles } from '../styles';
 
 interface CoursesProps {
+  courses: Course[];
   onOpenCourse: (id: string) => void;
 }
 
-export function Courses({ onOpenCourse }: CoursesProps) {
+export function Courses({ courses, onOpenCourse }: CoursesProps) {
   return (
     <View>
       <div className={tiles}>
-        {COURSES.map((c) =>
+        {courses.map((c) =>
         <button key={c.id} type="button" className={tile} onClick={() => onOpenCourse(c.id)}>
             <span className={`${art} ${artTone[c.art]}`} aria-hidden="true">
               {c.g}

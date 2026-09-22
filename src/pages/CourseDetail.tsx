@@ -4,13 +4,14 @@ import { Icon } from '../components/Icon';
 import { Quiz } from '../components/Quiz';
 import { ReplayList } from '../components/ReplayList';
 import { Player } from '../components/Player';
-import { MODULES } from '../data/lms';
+import type { ManagedModule } from '../types/workspace';
 import { useToast } from '../contexts/ToastContext';
 import { button, buttonGhost, card, courseGrid, heading, infoList, muted, panel } from '../styles';
 
 type Tab = 'lesson' | 'rec' | 'quiz' | 'assignment' | 'project' | 'exam';
 
 interface CourseDetailProps {
+  modules: ManagedModule[];
   onBack: () => void;
   onSelectReplay: (id: string) => void;
   onOpenAssignments: () => void;
@@ -25,7 +26,7 @@ const TABS: {id: Tab;label: string;}[] = [
 { id: 'exam', label: 'Exam' }];
 
 
-export function CourseDetail({ onBack, onSelectReplay, onOpenAssignments }: CourseDetailProps) {
+export function CourseDetail({ modules, onBack, onSelectReplay, onOpenAssignments }: CourseDetailProps) {
   const { toast } = useToast();
   const [tab, setTab] = useState<Tab>('lesson');
   const [complete, setComplete] = useState(false);
@@ -41,27 +42,28 @@ export function CourseDetail({ onBack, onSelectReplay, onOpenAssignments }: Cour
         <div>
           <h3 className={heading}>Modules</h3>
           <div>
-            {MODULES.map((m) =>
-            <details key={m.title} className={`relative pb-[18px] pl-[34px] before:absolute before:top-[22px] before:bottom-[-4px] before:left-2 before:w-0.5 before:bg-line last:before:hidden ${m.state === 'lock' ? 'opacity-60' : ''}`} open={m.open}>
+            {modules.map((module, moduleIndex) => {
+              const state = moduleIndex === 0 ? 'now' : 'lock';
+
+              return <details key={module.id} className={`relative pb-[18px] pl-[34px] before:absolute before:top-[22px] before:bottom-[-4px] before:left-2 before:w-0.5 before:bg-line last:before:hidden ${state === 'lock' ? 'opacity-60' : ''}`} open={moduleIndex === 0}>
                 <summary className="cursor-pointer list-none text-base font-[650] [&::-webkit-details-marker]:hidden">
-                  <span className={`absolute top-0.5 left-0 grid size-[19px] place-items-center rounded-full border-2 bg-background text-muted [&_.i]:size-[11px] [&_.i]:stroke-[3] ${m.state === 'ok' ? 'border-reward bg-reward text-hq-ink' : m.state === 'now' ? 'border-accent shadow-[0_0_0_4px_color-mix(in_srgb,var(--accent)_22%,transparent)]' : 'border-muted'}`} aria-hidden="true">
-                    {m.state === 'ok' && <Icon name="check" />}
-                    {m.state === 'lock' && <Icon name="lock" />}
+                  <span className={`absolute top-0.5 left-0 grid size-[19px] place-items-center rounded-full border-2 bg-background text-muted [&_.i]:size-[11px] [&_.i]:stroke-[3] ${state === 'now' ? 'border-accent shadow-[0_0_0_4px_color-mix(in_srgb,var(--accent)_22%,transparent)]' : 'border-muted'}`} aria-hidden="true">
+                    {state === 'lock' && <Icon name="lock" />}
                   </span>
-                  {m.title}
-                  <small className="block text-[13.5px] font-normal text-muted">{m.meta}</small>
+                  {module.title}
+                  <small className="block text-[13.5px] font-normal text-muted">{module.lessons.length} lessons</small>
                 </summary>
-                {m.lessons.length > 0 &&
-              <ul className="mt-2">
-                    {m.lessons.map((l) =>
-                <li key={l.label} className={`py-[5px] text-[14.5px] text-muted ${l.current ? 'font-semibold text-foreground before:text-accent-text before:content-["Current:_"]' : ''}`}>
-                        {l.label}
+                {module.lessons.length > 0 &&
+                  <ul className="mt-2">
+                    {module.lessons.map((lesson) =>
+                      <li key={lesson.id} className="py-[5px] text-[14.5px] text-muted first:font-semibold first:text-foreground first:before:text-accent-text first:before:content-['Current:_']">
+                        {lesson.title}
                       </li>
-                )}
+                    )}
                   </ul>
-              }
-              </details>
-            )}
+                }
+              </details>;
+            })}
           </div>
         </div>
 

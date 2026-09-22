@@ -86,6 +86,7 @@ export interface NavItem {
   id: ViewId;
   label: string;
   icon: 'home' | 'book' | 'video' | 'pen' | 'award' | 'chart' | 'upload' | 'users' | 'inbox';
+  path: string;
 }
 
 export interface AssignedCourse {

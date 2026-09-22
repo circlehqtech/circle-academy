@@ -2,7 +2,9 @@ import { useMemo, useState } from 'react';
 import { Icon } from '../components/Icon';
 import { View } from '../components/View';
 import { useToast } from '../contexts/ToastContext';
+import { useWorkspace } from '../features/workspace/useWorkspace';
 import { button, buttonGhost, card, fieldLabel, heading, muted, textInput } from '../styles';
+import { createEntityId } from '../utils/id';
 
 type WorkStatus = 'due' | 'submitted' | 'revision' | 'approved';
 type WorkKind = 'Assignment' | 'Checkpoint' | 'Final project';
@@ -32,20 +34,59 @@ const statusLabel: Record<WorkStatus, string> = { due: 'Action required', submit
 
 export function StudentAssignments() {
   const { toast } = useToast();
-  const [items, setItems] = useState(initialWork);
+  const { addSubmission, submissions } = useWorkspace();
+  const [baseItems, setBaseItems] = useState(initialWork);
   const [selectedId, setSelectedId] = useState(initialWork[0].id);
   const [filter, setFilter] = useState<'all' | WorkStatus>('all');
   const [submissionMode, setSubmissionMode] = useState<'link' | 'file' | 'written'>('link');
   const [draft, setDraft] = useState('');
+  const items = useMemo<StudentWorkItem[]>(() => baseItems.map((item) => {
+    const review = submissions.find((submission) =>
+      submission.student === 'Ngozi Eze' &&
+      submission.course === item.course &&
+      submission.title === item.title,
+    );
+
+    if (!review) return item;
+
+    const reviewStatus: WorkStatus = review.status === 'pending' ? 'submitted' : review.status;
+
+    return {
+      ...item,
+      status: reviewStatus,
+      attempt: review.attempt,
+      feedback: review.feedback,
+    };
+  }), [baseItems, submissions]);
   const selected = items.find((item) => item.id === selectedId) ?? items[0];
   const visible = useMemo(() => filter === 'all' ? items : items.filter((item) => item.status === filter), [filter, items]);
+  const counts = useMemo(() => ({
+    due: items.filter((item) => item.status === 'due').length,
+    submitted: items.filter((item) => item.status === 'submitted').length,
+    revision: items.filter((item) => item.status === 'revision').length,
+    approved: items.filter((item) => item.status === 'approved').length,
+  }), [items]);
 
   const submit = () => {
     if (selected.kind !== 'Checkpoint' && draft.trim().length < 4) {
       toast('Add your work before submitting.');
       return;
     }
-    setItems((current) => current.map((item) => item.id === selected.id ? { ...item, status: 'submitted', attempt: item.attempt + 1 } : item));
+    const attempt = selected.attempt + 1;
+    setBaseItems((current) => current.map((item) => item.id === selected.id ? { ...item, status: 'submitted', attempt } : item));
+    addSubmission({
+      id: createEntityId('submission'),
+      student: 'Ngozi Eze',
+      initials: 'NE',
+      course: selected.course,
+      title: selected.title,
+      kind: selected.kind === 'Final project' ? 'Final project' : 'Assignment',
+      submitted: 'Just now',
+      attempt,
+      format: submissionMode === 'link' ? 'Project link' : submissionMode === 'file' ? `File, ${draft}` : 'Written response',
+      body: draft,
+      status: 'pending',
+    });
     setDraft('');
     toast(`${selected.kind} submitted for review.`);
   };
@@ -53,7 +94,7 @@ export function StudentAssignments() {
   return (
     <View>
       <div className="mb-8 grid grid-cols-2 gap-3 sm:grid-cols-4">
-        {[['2', 'Action required'], ['1', 'In review'], ['1', 'Revision'], ['1', 'Approved']].map(([value, label]) => <div key={label} className="border-y border-line px-1 py-4 sm:px-4"><b className="block text-3xl font-[740]">{value}</b><span className="text-sm text-muted">{label}</span></div>)}
+        {[[counts.due, 'Action required'], [counts.submitted, 'In review'], [counts.revision, 'Revision'], [counts.approved, 'Approved']].map(([value, label]) => <div key={label} className="border-y border-line px-1 py-4 sm:px-4"><b className="block text-3xl font-[740]">{value}</b><span className="text-sm text-muted">{label}</span></div>)}
       </div>
       <div className="grid gap-8 min-[1021px]:grid-cols-[minmax(280px,360px)_minmax(0,1fr)]">
         <aside>

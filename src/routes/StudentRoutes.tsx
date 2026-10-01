@@ -7,20 +7,14 @@ import { LiveReplays } from "../pages/LiveReplays";
 import { Study } from "../pages/Study";
 import { Certificates } from "../pages/Certificates";
 import { StudentAssignments } from "../pages/StudentAssignments";
-import { REPLAYS } from "../data/lms";
 import { useWorkspace } from "../features/workspace/useWorkspace";
 import { usePlayer } from "../contexts/PlayerContext";
 import { useToast } from "../contexts/ToastContext";
 import { toStudentCourse } from "../utils/course";
 
 function useStudentCourses() {
-  const { courses, students } = useWorkspace();
-  const student = students.find((item) => item.id === "student-ngozi");
-  return courses.filter(
-    (course) =>
-      (course.status === "Published" || course.progress === 100) &&
-      (student?.courseIds.includes(course.id) || course.cohortId === student?.cohortId),
-  );
+  const { courses } = useWorkspace();
+  return courses;
 }
 
 function useCourseNavigation() {
@@ -30,11 +24,7 @@ function useCourseNavigation() {
   return (courseId: string) => {
     const course = courses.find((item) => item.id === courseId);
     if (!course) return;
-    navigate(
-      course.progress === 100
-        ? "/student/certificates"
-        : `/student/courses/${course.id}`,
-    );
+    navigate(`/student/courses/${course.id}`);
   };
 }
 
@@ -66,7 +56,6 @@ export function StudentHomeRoute() {
       onOpenCourse={openCourse}
       onOpenAnnouncements={openAnnouncementPanel}
       onOpenAssignments={() => navigate("/student/assignments")}
-      onOpenCertificates={() => navigate("/student/certificates")}
     />
   );
 }
@@ -85,10 +74,12 @@ export function CourseDetailRoute() {
 
   return (
     <CourseDetail
+      courseId={course.id}
+      progress={course.progress}
       modules={course.modules}
+      assessments={course.assessments ?? []}
       onBack={() => navigate("/student/courses")}
       onSelectReplay={(replayId) => navigate(`/student/live/${replayId}`)}
-      onOpenAssignments={() => navigate("/student/assignments")}
     />
   );
 }
@@ -96,7 +87,7 @@ export function CourseDetailRoute() {
 export function LiveReplaysRoute() {
   const navigate = useNavigate();
   const { replayId } = useParams();
-  const { selectReplay } = usePlayer();
+  const { selectReplay, replays } = usePlayer();
   const { toast } = useToast();
 
   useEffect(() => {
@@ -104,7 +95,7 @@ export function LiveReplaysRoute() {
   }, [replayId, selectReplay]);
 
   const chooseReplay = (id: string) => {
-    const replay = REPLAYS.find((item) => item.id === id);
+    const replay = replays.find((item) => item.id === id);
     selectReplay(id);
     navigate(`/student/live/${id}`);
     if (replay) {

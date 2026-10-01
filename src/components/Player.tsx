@@ -2,10 +2,22 @@ import React from 'react';
 import { Icon } from './Icon';
 import { usePlayer } from '../contexts/PlayerContext';
 import { fmt } from '../utils/format';
+import { externalHttpUrl, isDirectVideoUrl, videoEmbedUrl } from '../utils/externalMedia';
 
 export function Player() {
   const { replay, time, playing, speed, toggle, cycleSpeed, seek } = usePlayer();
+  const externalUrl = externalHttpUrl(replay.url);
+  const embedUrl = videoEmbedUrl(externalUrl);
   const pct = `${time / replay.dur * 100}%`;
+
+  if (externalUrl) {
+    return (
+      <div className="overflow-hidden rounded-[20px] bg-[#0b0b0d] text-hq-bone">
+        {embedUrl ? <iframe className="aspect-video w-full border-0" src={embedUrl} title={replay.title} allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture; web-share" allowFullScreen /> : isDirectVideoUrl(externalUrl) ? <video className="aspect-video w-full bg-black" src={externalUrl} controls preload="metadata">Your browser cannot play this linked video.</video> : <div className="grid aspect-video place-items-center bg-[radial-gradient(120%_130%_at_15%_0%,var(--hq-red-ink),#0b0b0d_68%)] p-8 text-center"><div><Icon name="link" className="mx-auto mb-4 size-8 text-hq-amber" /><h3 className="text-2xl font-[720]">{replay.title}</h3><p className="mt-2 text-sm text-white/70">This recording opens securely on the external video host.</p><a className="mt-5 inline-flex items-center gap-2 rounded-full bg-hq-red px-5 py-2.5 font-semibold text-white hover:bg-accent-press" href={externalUrl} target="_blank" rel="noopener noreferrer"><Icon name="play" filled className="size-4" />Open recording</a></div></div>}
+        <div className="flex flex-wrap items-center justify-between gap-3 bg-hq-ink px-4 py-3"><div><b className="block text-sm">{replay.title}</b><span className="text-xs text-[#b9b4aa]">Externally hosted recording</span></div><a className="inline-flex items-center gap-2 text-sm font-semibold text-hq-amber hover:underline" href={externalUrl} target="_blank" rel="noopener noreferrer"><Icon name="link" className="size-4" />Open in new tab</a></div>
+      </div>
+    );
+  }
 
   return (
     <div className="overflow-hidden rounded-[20px] bg-[#0b0b0d] text-hq-bone">

@@ -1,11 +1,12 @@
 import React, { createContext, useCallback, useContext, useEffect, useMemo, useRef, useState } from 'react';
-import { REPLAYS } from '../data/lms';
 import type { Replay } from '../types/lms';
+import { useWorkspace } from '../features/workspace/useWorkspace';
 
 export const SPEEDS = [1, 1.25, 1.5, 2] as const;
 
 interface PlayerValue {
   replay: Replay;
+  replays: Replay[];
   time: number;
   playing: boolean;
   speed: number;
@@ -26,13 +27,19 @@ export function usePlayer(): PlayerValue {
 }
 
 export function PlayerProvider({ children }: {children: React.ReactNode;}) {
-  const [replay, setReplay] = useState<Replay>(REPLAYS[0]);
-  const [time, setTime] = useState(REPLAYS[0].dur * REPLAYS[0].seen);
+  const { sessions } = useWorkspace();
+  const replays = useMemo<Replay[]>(() => sessions.filter((session) => session.ok).map((session, index) => {
+    const value = session as typeof session & { id?: string; duration?: number; seen?: number };
+    return { id: value.id ?? `replay-${index}`, title: session.t, dur: value.duration || 1, seen: value.seen ?? 0, date: session.d, url: session.recordingUrl };
+  }), [sessions]);
+  const [replayId, setReplayId] = useState('');
+  const replay = useMemo(() => replays.find((item) => item.id === replayId) ?? replays[0] ?? { id: 'no-replay', title: 'No recording selected', dur: 1, seen: 0, date: '' }, [replayId, replays]);
+  const [time, setTime] = useState(0);
   const [playing, setPlaying] = useState(false);
   const [speed, setSpeed] = useState<number>(1);
   const [marks, setMarks] = useState<number[]>([]);
   const speedRef = useRef(speed);
-  speedRef.current = speed;
+  useEffect(() => { speedRef.current = speed; }, [speed]);
 
   useEffect(() => {
     if (!playing) return;
@@ -71,16 +78,16 @@ export function PlayerProvider({ children }: {children: React.ReactNode;}) {
   }, []);
 
   const selectReplay = useCallback((id: string) => {
-    const r = REPLAYS.find((x) => x.id === id);
-    if (!r) return;
-    setReplay(r);
-    setTime(r.seen < 1 ? r.dur * r.seen : 0);
+    const selected = replays.find((item) => item.id === id);
+    if (!selected) return;
+    setReplayId(id);
+    setTime(selected.seen < 1 ? selected.dur * selected.seen : 0);
     setPlaying(false);
-  }, []);
+  }, [replays]);
 
   const value = useMemo(
-    () => ({ replay, time, playing, speed, marks, toggle, cycleSpeed, seek, addMark, selectReplay }),
-    [replay, time, playing, speed, marks, toggle, cycleSpeed, seek, addMark, selectReplay]
+    () => ({ replay, replays, time, playing, speed, marks, toggle, cycleSpeed, seek, addMark, selectReplay }),
+    [replay, replays, time, playing, speed, marks, toggle, cycleSpeed, seek, addMark, selectReplay]
   );
 
   return <Ctx.Provider value={value}>{children}</Ctx.Provider>;

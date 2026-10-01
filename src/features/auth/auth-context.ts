@@ -1,11 +1,13 @@
 import { createContext } from "react";
 import type { Role } from "../../types/lms";
+import type { Account } from "../../api/types";
 
 export interface AuthContextValue {
   isAuthenticated: boolean;
   role: Role | null;
-  login: (role: Role) => void;
-  switchRole: (role: Role) => void;
+  account: Account | null;
+  accessToken: string | null;
+  mustChangePassword: boolean;
   logout: () => void;
 }
 

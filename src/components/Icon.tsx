@@ -9,6 +9,7 @@ import {
   ChevronRightIcon,
   CircleHelpIcon,
   CopyIcon,
+  DownloadIcon,
   EyeIcon,
   FileTextIcon,
   FolderOpenIcon,
@@ -71,6 +72,7 @@ export type IconName =
 'save' |
 'trash' |
 'copy' |
+'download' |
 'more' |
 'grip' |
 'file' |
@@ -111,6 +113,7 @@ const MAP: Record<IconName, React.ComponentType<{className?: string;}>> = {
   save: SaveIcon,
   trash: Trash2Icon,
   copy: CopyIcon,
+  download: DownloadIcon,
   more: MoreHorizontalIcon,
   grip: GripVerticalIcon,
   file: FileTextIcon,

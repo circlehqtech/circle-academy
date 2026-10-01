@@ -1,139 +1,84 @@
 import { useState } from 'react';
-import { View } from '../components/View';
+import { EmptyState } from '../components/ui/EmptyState';
 import { Icon } from '../components/Icon';
-import { Quiz } from '../components/Quiz';
 import { ReplayList } from '../components/ReplayList';
-import { Player } from '../components/Player';
-import type { ManagedModule } from '../types/workspace';
+import { View } from '../components/View';
+import { lmsApi } from '../api/lmsApi';
 import { useToast } from '../contexts/ToastContext';
-import { button, buttonGhost, card, courseGrid, heading, infoList, muted, panel } from '../styles';
-
-type Tab = 'lesson' | 'rec' | 'quiz' | 'assignment' | 'project' | 'exam';
+import type { AssessmentRecord, ManagedModule } from '../types/workspace';
+import { buttonGhostSmall, card, courseGrid, heading, muted } from '../styles';
+import { externalHttpUrl, isDirectVideoUrl, videoEmbedUrl } from '../utils/externalMedia';
+import { CourseQuizPanel } from './student/AssessmentsPage';
 
 interface CourseDetailProps {
+  courseId: string;
+  progress: number;
   modules: ManagedModule[];
+  assessments: AssessmentRecord[];
   onBack: () => void;
   onSelectReplay: (id: string) => void;
-  onOpenAssignments: () => void;
 }
 
-const TABS: {id: Tab;label: string;}[] = [
-{ id: 'lesson', label: 'Learn' },
-{ id: 'rec', label: 'Recordings' },
-{ id: 'quiz', label: 'Quiz 6' },
-{ id: 'assignment', label: 'Assignment' },
-{ id: 'project', label: 'Final project' },
-{ id: 'exam', label: 'Exam' }];
+type CourseTab = 'lesson' | 'quiz' | 'recordings';
 
-
-export function CourseDetail({ modules, onBack, onSelectReplay, onOpenAssignments }: CourseDetailProps) {
+export function CourseDetail({ courseId, progress, modules, assessments, onBack, onSelectReplay }: CourseDetailProps) {
+  const lessons = modules.flatMap((module) => module.lessons.map((lesson) => ({ ...lesson, moduleTitle: module.title })));
+  const [selectedLessonId, setSelectedLessonId] = useState('');
+  const [completedLessonIds, setCompletedLessonIds] = useState<string[]>(() => progress >= 100 ? lessons.map((lesson) => lesson.id) : []);
+  const [savingLessonId, setSavingLessonId] = useState('');
+  const [tab, setTab] = useState<CourseTab>('lesson');
   const { toast } = useToast();
-  const [tab, setTab] = useState<Tab>('lesson');
-  const [complete, setComplete] = useState(false);
+  const selectedLesson = lessons.find((lesson) => lesson.id === selectedLessonId) ?? lessons[0];
 
-  return (
-    <View>
-      <button type="button" className="mb-4 inline-flex items-center gap-1.5 font-semibold text-muted hover:text-foreground" onClick={onBack}>
-        <Icon name="back" />
-        All courses
-      </button>
+  const markLessonComplete = async () => {
+    if (!selectedLesson || completedLessonIds.includes(selectedLesson.id) || savingLessonId) return;
+    setSavingLessonId(selectedLesson.id);
+    try {
+      await lmsApi.courses.recordProgress(courseId, {
+        lessonId: selectedLesson.id,
+        type: 'LESSON_COMPLETED',
+      });
+      setCompletedLessonIds((current) => [...current, selectedLesson.id]);
+      toast('Lesson marked complete.');
+    } catch (error) {
+      toast(error instanceof Error ? error.message : 'Could not update lesson progress.');
+    } finally {
+      setSavingLessonId('');
+    }
+  };
 
-      <div className={courseGrid}>
-        <div>
-          <h3 className={heading}>Modules</h3>
-          <div>
-            {modules.map((module, moduleIndex) => {
-              const state = moduleIndex === 0 ? 'now' : 'lock';
+  return <View>
+    <button type="button" className="mb-4 inline-flex items-center gap-1.5 font-semibold text-muted hover:text-foreground" onClick={onBack}><Icon name="back" />All courses</button>
+    <div className={`${card} mb-5 flex flex-wrap items-center justify-between gap-4 p-4`}>
+      <div><b className="block">{progress >= 100 ? 'Course completed' : 'Course progress'}</b><span className="text-sm text-muted">{progress >= 100 ? 'Every lesson has been completed.' : `${progress}% of the course completed.`}</span></div>
+      <div className="flex items-center gap-3"><div className="h-2 w-36 overflow-hidden rounded-full bg-surface-2" role="progressbar" aria-label="Course progress" aria-valuemin={0} aria-valuemax={100} aria-valuenow={progress}><div className={`h-full rounded-full ${progress >= 100 ? 'bg-reward' : 'bg-accent'}`} style={{ width: `${progress}%` }} /></div><b>{progress}%</b>{progress >= 100 ? <Icon name="check" className="text-reward" /> : null}</div>
+    </div>
+    {!modules.length ? <EmptyState icon="book" title="This course has no content yet" description="Modules and lessons will appear here after the course team publishes them." /> : <div className={courseGrid}>
+      <aside>
+        <h2 className={heading}>Modules</h2>
+        <div className="grid gap-3">{modules.map((module, index) => <section key={module.id} className={card}><div className="flex items-start gap-3"><span className="grid size-7 shrink-0 place-items-center rounded-full bg-surface-2 text-xs font-bold">{index + 1}</span><div className="min-w-0 flex-1"><b className="block">{module.title}</b><span className="text-xs text-muted">{module.lessons.length} {module.lessons.length === 1 ? 'lesson' : 'lessons'}</span></div></div>{module.lessons.length ? <div className="mt-3 grid gap-1">{module.lessons.map((lesson) => <button key={lesson.id} type="button" aria-pressed={selectedLesson?.id === lesson.id} className="rounded-xl px-3 py-2 text-left text-sm text-muted hover:bg-background aria-pressed:bg-background aria-pressed:font-semibold aria-pressed:text-foreground" onClick={() => { setSelectedLessonId(lesson.id); setTab('lesson'); }}><span className="flex items-center justify-between gap-2"><span>{lesson.title}<span className="mt-0.5 block text-xs font-normal text-muted">{lesson.type}</span></span>{completedLessonIds.includes(lesson.id) ? <Icon name="check" className="shrink-0 text-reward" /> : null}</span></button>)}</div> : <p className="mt-3 rounded-xl border border-dashed border-line p-3 text-sm text-muted">No lessons in this module yet.</p>}</section>)}</div>
+      </aside>
 
-              return <details key={module.id} className={`relative pb-[18px] pl-[34px] before:absolute before:top-[22px] before:bottom-[-4px] before:left-2 before:w-0.5 before:bg-line last:before:hidden ${state === 'lock' ? 'opacity-60' : ''}`} open={moduleIndex === 0}>
-                <summary className="cursor-pointer list-none text-base font-[650] [&::-webkit-details-marker]:hidden">
-                  <span className={`absolute top-0.5 left-0 grid size-[19px] place-items-center rounded-full border-2 bg-background text-muted [&_.i]:size-[11px] [&_.i]:stroke-[3] ${state === 'now' ? 'border-accent shadow-[0_0_0_4px_color-mix(in_srgb,var(--accent)_22%,transparent)]' : 'border-muted'}`} aria-hidden="true">
-                    {state === 'lock' && <Icon name="lock" />}
-                  </span>
-                  {module.title}
-                  <small className="block text-[13.5px] font-normal text-muted">{module.lessons.length} lessons</small>
-                </summary>
-                {module.lessons.length > 0 &&
-                  <ul className="mt-2">
-                    {module.lessons.map((lesson) =>
-                      <li key={lesson.id} className="py-[5px] text-[14.5px] text-muted first:font-semibold first:text-foreground first:before:text-accent-text first:before:content-['Current:_']">
-                        {lesson.title}
-                      </li>
-                    )}
-                  </ul>
-                }
-              </details>;
-            })}
-          </div>
-        </div>
+      <section>
+        <div className="mb-6 flex gap-1.5 overflow-x-auto border-b border-line" role="tablist" aria-label="Course sections"><button type="button" role="tab" aria-selected={tab === 'lesson'} className="-mb-px min-h-11 shrink-0 border-b-2 border-transparent px-4 py-2.5 font-semibold text-muted aria-selected:border-accent aria-selected:text-foreground" onClick={() => setTab('lesson')}>Learn</button><button type="button" role="tab" aria-selected={tab === 'quiz'} className="-mb-px min-h-11 shrink-0 border-b-2 border-transparent px-4 py-2.5 font-semibold text-muted aria-selected:border-accent aria-selected:text-foreground" onClick={() => setTab('quiz')}>Quiz</button><button type="button" role="tab" aria-selected={tab === 'recordings'} className="-mb-px min-h-11 shrink-0 border-b-2 border-transparent px-4 py-2.5 font-semibold text-muted aria-selected:border-accent aria-selected:text-foreground" onClick={() => setTab('recordings')}>Recordings</button></div>
+        {tab === 'lesson' ? selectedLesson ? <div><p className="text-sm font-semibold text-accent-text">{selectedLesson.moduleTitle.toUpperCase()}</p><h2 className="mt-1 text-2xl font-[700]">{selectedLesson.title}</h2><p className={`mt-1 ${muted}`}>{selectedLesson.type}</p>{selectedLesson.description ? <p className="mt-4 max-w-[68ch] text-muted">{selectedLesson.description}</p> : null}<LessonMaterial lesson={selectedLesson} /><div className="mt-6 flex justify-end"><button type="button" className={buttonGhostSmall} disabled={savingLessonId === selectedLesson.id || completedLessonIds.includes(selectedLesson.id)} onClick={markLessonComplete}>{completedLessonIds.includes(selectedLesson.id) ? <><Icon name="check" />Completed</> : savingLessonId === selectedLesson.id ? 'Saving…' : <><Icon name="check" />Mark lesson complete</>}</button></div></div> : <EmptyState icon="book" title="No lessons available" description="Add lessons to a module before learning content can be shown." /> : tab === 'quiz' ? <CourseQuizPanel assessments={assessments} /> : <div><p className={`mb-3 ${muted}`}>Published class recordings for this course appear here.</p><ReplayList onSelect={onSelectReplay} /></div>}
+      </section>
+    </div>}
+  </View>;
+}
 
-        <div>
-          <div className="mb-[22px] flex gap-1.5 border-b border-line" role="tablist">
-            {TABS.map((t) =>
-            <button
-              key={t.id}
-              type="button"
-              role="tab"
-              className="-mb-px border-b-2 border-transparent px-4 py-2.5 font-semibold text-muted transition-colors duration-200 aria-selected:border-accent aria-selected:text-foreground"
-              aria-selected={tab === t.id}
-              onClick={() => setTab(t.id)}>
-              
-                {t.label}
-              </button>
-            )}
-          </div>
+function LessonMaterial({ lesson }: { lesson: ManagedModule['lessons'][number] }) {
+  const resources = lesson.resources ?? [];
+  const video = resources.find((resource) => resource.type === 'Video' && externalHttpUrl(resource.url));
+  const videoUrl = externalHttpUrl(video?.url);
+  const embedUrl = videoEmbedUrl(videoUrl);
+  if (!resources.length) return <EmptyState icon={lesson.type === 'Video' || lesson.type === 'Class recording' ? 'video' : lesson.type === 'Audio' ? 'play' : 'file'} title="Lesson material is not available yet" description="The lesson has been created, but its learning resource has not been added or published." compact className="mt-6" />;
 
-          {tab === 'lesson' && <div className="animate-pane">
-            <div className="mb-5 flex flex-wrap items-start justify-between gap-4"><div><p className="text-sm font-semibold text-accent-text">MODULE 3 · LESSON 2</p><h2 className="mt-1 text-2xl font-[700]">Compound components</h2><p className={`mt-1 ${muted}`}>18 minutes · Video and text · 2 resources</p></div><span className={`rounded-[99px] px-3 py-1 text-xs font-semibold ${complete ? 'bg-reward text-hq-ink' : 'bg-surface-2 text-muted'}`}>{complete ? 'Completed' : 'In progress'}</span></div>
-            <Player />
-            <article className="mt-7 max-w-[72ch]"><h3 className={heading}>Build flexible APIs without prop drilling</h3><p className="text-muted">Compound components let related UI pieces share state while consumers keep control of composition. In this lesson, you will build a tabs API that remains accessible when panels are reordered or wrapped.</p><div className={`${card} mt-5`}><h4 className="font-[650]">By the end of this lesson, you can</h4><ul className="mt-3 grid gap-2 text-sm">{['Recognise when a compound API improves usability', 'Share state safely through context', 'Preserve keyboard and screen-reader behaviour'].map((item) => <li key={item} className="flex gap-2"><Icon name="check" className="size-4 text-reward" />{item}</li>)}</ul></div><h3 className={`${heading} mt-7`}>Lesson notes</h3><p className="text-muted">Keep the provider responsible for state and behaviour, but let child components own their markup. Memoise the shared value when it contains objects or callbacks, and always design the keyboard model before exposing the API.</p></article>
-            <div className="mt-7 grid gap-3 sm:grid-cols-3">{[['file', 'Lesson transcript', 'PDF · 184 KB'], ['folder', 'Starter project', 'ZIP · 32 KB'], ['link', 'React accessibility guide', 'External link']].map(([icon, title, meta]) => <button key={title} type="button" className={`${card} flex items-start gap-3 text-left hover:border-foreground`} onClick={() => toast(`${title} opened.`)}><Icon name={icon as 'file' | 'folder' | 'link'} className="mt-0.5 text-accent-text" /><span><b className="block">{title}</b><span className="text-xs text-muted">{meta}</span></span></button>)}</div>
-            <div className="mt-7 flex flex-wrap items-center justify-between gap-3 border-t border-line pt-5"><button className={buttonGhost} type="button" onClick={() => toast('Previous lesson opened.')}>Previous lesson</button><button className={button} type="button" onClick={() => { setComplete(true); toast('Lesson complete. Slots and polymorphic props is unlocked.'); }}><Icon name="check" />{complete ? 'Completed' : 'Mark complete and continue'}</button></div>
-          </div>}
-
-          {tab === 'rec' &&
-          <div className="animate-pane">
-              <p className={`mb-3 ${muted}`}>
-                Every live class is recorded and added here within a few hours.
-              </p>
-              <ReplayList onSelect={onSelectReplay} />
-            </div>
-          }
-
-          {tab === 'assignment' && <div className="animate-pane"><div className={panel}><span className="text-sm font-semibold text-accent-text">ASSIGNMENT 6</span><h3 className={`${heading} mt-2`}>Design a compound-component API</h3><p className={muted}>Apply this module to an accessible tabs interface. Submit a project link, source file, or written response by Thursday at 11:59 pm.</p><dl className={`${infoList} my-5`}><dt>Attempts</dt><dd>3 allowed</dd><dt>Approval</dt><dd>Facilitator review required</dd><dt>Unlocks</dt><dd>Module 4</dd></dl><button className={button} type="button" onClick={onOpenAssignments}>Open assignment</button></div></div>}
-
-          {tab === 'project' && <div className="animate-pane"><div className={panel}><span className="text-sm font-semibold text-accent-text">FINAL PROJECT</span><h3 className={`${heading} mt-2`}>Build a headless data table</h3><p className={muted}>Create a reusable compound-component data table with sorting, selection, and keyboard navigation. Facilitator approval is required for course completion and certificate eligibility.</p><div className="my-5 grid gap-2">{['All lessons completed', 'Quiz score at least 80%', 'Assignment 6 approved', 'Project approved'].map((item, index) => <div key={item} className="flex items-center gap-2 text-sm"><Icon name={index < 2 ? 'check' : 'lock'} className={`size-4 ${index < 2 ? 'text-reward' : 'text-muted'}`} />{item}</div>)}</div><button className={button} type="button" onClick={onOpenAssignments}>View project brief</button></div></div>}
-
-          {tab === 'quiz' &&
-          <div className="animate-pane">
-              <Quiz />
-            </div>
-          }
-
-          {tab === 'exam' &&
-          <div className="animate-pane">
-              <div className={`${panel} max-w-[560px]`}>
-                <h3 className={heading}>Mid-course exam</h3>
-                <p className={muted}>
-                  Covers modules 1 to 3. Answers save automatically, so a dropped connection will not
-                  lose your work.
-                </p>
-                <dl className={`${infoList} my-3.5 mb-5`}>
-                  <dt>Opens</dt>
-                  <dd>Friday, 9:00 am</dd>
-                  <dt>Duration</dt>
-                  <dd>60 minutes</dd>
-                  <dt>Attempts</dt>
-                  <dd>1</dd>
-                </dl>
-                <button type="button" className={button} disabled>
-                  Opens in 4 days
-                </button>
-              </div>
-            </div>
-          }
-        </div>
-      </div>
-    </View>);
-
+  return <div className="mt-6 grid gap-4">
+    {videoUrl ? <div className="overflow-hidden rounded-[20px] bg-hq-ink text-hq-bone">{embedUrl ? <iframe className="aspect-video w-full border-0" src={embedUrl} title={video?.title ?? lesson.title} allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture; web-share" allowFullScreen /> : isDirectVideoUrl(videoUrl) ? <video className="aspect-video w-full bg-black" src={videoUrl} controls preload="metadata">Your browser cannot play this linked video.</video> : <div className="grid aspect-video place-items-center p-8 text-center"><div><Icon name="video" className="mx-auto mb-3 size-8 text-hq-amber" /><b className="block text-xl">{video?.title}</b><p className="mt-1 text-sm text-white/70">This lesson video is hosted externally.</p><a className="mt-4 inline-flex items-center gap-2 rounded-full bg-accent px-5 py-2.5 font-semibold text-white" href={videoUrl} target="_blank" rel="noopener noreferrer"><Icon name="play" filled className="size-4" />Open video</a></div></div>}<div className="flex items-center justify-between gap-3 px-4 py-3"><span className="text-sm">Externally hosted video</span><a className="inline-flex items-center gap-1.5 text-sm font-semibold text-hq-amber hover:underline" href={videoUrl} target="_blank" rel="noopener noreferrer"><Icon name="link" className="size-4" />Open in new tab</a></div></div> : null}
+    {resources.filter((resource) => resource.id !== video?.id).map((resource) => {
+      const url = externalHttpUrl(resource.url);
+      return <article key={resource.id} className={`${card} flex flex-wrap items-start justify-between gap-4`}><div><b className="block">{resource.title}</b><span className="text-sm text-muted">{resource.type}{resource.required ? ' · Required' : ''}</span>{resource.textContent ? <p className="mt-3 whitespace-pre-wrap">{resource.textContent}</p> : null}</div>{url ? <a className="inline-flex items-center gap-2 text-sm font-semibold text-accent-text hover:underline" href={url} target="_blank" rel="noopener noreferrer"><Icon name="link" className="size-4" />Open resource</a> : null}</article>;
+    })}
+  </div>;
 }

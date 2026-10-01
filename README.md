@@ -11,6 +11,7 @@ Circle HQ's role-based learning management interface.
 ## Installed Packages
 - zustand
 - axios
+- @tanstack/react-query
 - motion
 - react-router-dom
 
@@ -20,6 +21,17 @@ Circle HQ's role-based learning management interface.
 cd circle-lm
 npm run dev
 ```
+
+Copy `.env.example` to `.env.local` and set `VITE_API_BASE_URL`. Local backend development uses
+`http://localhost:3000/api/v1`; production falls back to the Railway API when the variable is not set.
+
+## API integration
+
+- `src/api/client.ts` owns the Axios instance, bearer-token interceptor, and normalized API errors.
+- `src/api/endpoints.ts` is the endpoint and query-key registry.
+- `src/api/lmsApi.ts` exposes the complete role-scoped LMS API from the frontend handoff.
+- `src/store/authStore.ts` persists the access token and account with Zustand.
+- TanStack Query loads and invalidates server state; Zustand is limited to client authentication state.
 
 ## Application structure
 

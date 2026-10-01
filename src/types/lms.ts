@@ -7,6 +7,7 @@ export type ViewId =
 'live' |
 'study' |
 'assignments' |
+'studentAssessments' |
 'certs' |
 'profile' |
 'teaching' |
@@ -42,6 +43,7 @@ export interface Replay {
   dur: number;
   seen: number;
   date: string;
+  url?: string;
 }
 
 export interface Announcement {
@@ -76,9 +78,11 @@ export interface Note {
 }
 
 export interface Session {
+  id?: string;
   t: string;
   d: string;
   ok: boolean;
+  recordingUrl?: string;
   uploading?: boolean;
 }
 
@@ -112,6 +116,10 @@ export type SubmissionStatus = 'pending' | 'approved' | 'revision';
 
 export interface Submission {
   id: string;
+  submissionId?: string;
+  projectId?: string;
+  courseId?: string;
+  lessonId?: string;
   student: string;
   initials: string;
   course: string;
@@ -123,6 +131,19 @@ export interface Submission {
   body: string;
   status: SubmissionStatus;
   feedback?: string;
+  workflowStatus?: string;
+  dueAt?: string;
+  requirements?: string[];
+}
+
+export interface SubmissionDraftInput {
+  submissionId?: string;
+  projectId?: string;
+  courseId: string;
+  lessonId?: string;
+  title: string;
+  description: string;
+  file?: File;
 }
 
 export interface ClassActivity {

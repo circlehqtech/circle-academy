@@ -86,9 +86,9 @@
 }
 
 :root {
-  --hq-red: #e0142c;
-  --hq-red-deep: #c21024;
-  --hq-red-ink: #5c0512;
+  --hq-red: #ff0000;
+  --hq-red-deep: #cc0000;
+  --hq-red-ink: #4d0000;
   --hq-black: #070708;
   --hq-panel: #0e0e11;
   --hq-line: #1e1e24;
@@ -107,7 +107,7 @@
   --line: #d4cdbf;
   --accent: var(--hq-red);
   --accent-press: var(--hq-red-deep);
-  --accent-text: #c21024;
+  --accent-text: #cc0000;
   --reward: var(--hq-amber);
   padding-block: env(safe-area-inset-top, 0px) env(safe-area-inset-bottom, 0px);
 }
@@ -119,7 +119,7 @@
   --text: var(--hq-bone);
   --muted: var(--hq-mute);
   --line: var(--hq-line);
-  --accent-text: #ff6b7a;
+  --accent-text: #ff7070;
 }
 
 @layer base {
@@ -127,6 +127,7 @@
   body,
   #root {
     min-height: 100%;
+    overflow-x: clip;
   }
   html {
     scroll-padding-top: env(safe-area-inset-top, 0px);

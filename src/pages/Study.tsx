@@ -1,26 +1,53 @@
-import { useEffect, useRef, useState } from 'react';
+import { useCallback, useEffect, useRef, useState } from 'react';
 import { View } from '../components/View';
 import { Player } from '../components/Player';
-import { INITIAL_NOTES } from '../data/lms';
 import { usePlayer } from '../contexts/PlayerContext';
 import { useToast } from '../contexts/ToastContext';
 import { fmt } from '../utils/format';
 import type { Note } from '../types/lms';
 import { button, buttonGhostSmall, buttonSmall, chip, heading, muted, studyGrid, textarea } from '../styles';
+import { useWorkspace } from '../features/workspace/useWorkspace';
+import { lmsApi } from '../api/lmsApi';
+import { extractId } from '../api/adapters';
+import { EmptyState } from '../components/ui/EmptyState';
 
 const TOTAL = 1500;
 const CIRC = 260.7;
 
 export function Study() {
-  const { time, seek } = usePlayer();
+  const { time, seek, replays } = usePlayer();
   const { toast } = useToast();
-  const [notes, setNotes] = useState<Note[]>(INITIAL_NOTES);
+  const { courses } = useWorkspace();
+  const [notes, setNotes] = useState<Note[]>([]);
   const [draft, setDraft] = useState('');
   const [newest, setNewest] = useState<number | null>(null);
   const [left, setLeft] = useState(TOTAL);
   const [running, setRunning] = useState(false);
   const toastRef = useRef(toast);
-  toastRef.current = toast;
+  const sessionIdRef = useRef<string | null>(null);
+  useEffect(() => { toastRef.current = toast; }, [toast]);
+
+  const completeFocus = useCallback(async (durationSeconds: number) => {
+    const sessionId = sessionIdRef.current;
+    if (!sessionId) return;
+    sessionIdRef.current = null;
+    try { await lmsApi.student.completeStudySession(sessionId, { endedAt: new Date().toISOString(), durationSeconds }); }
+    catch (failure) { toastRef.current(failure instanceof Error ? failure.message : 'Could not save this study session.'); }
+  }, []);
+
+  const toggleFocus = useCallback(async () => {
+    if (running) { setRunning(false); return; }
+    if (!sessionIdRef.current) {
+      const courseId = courses[0]?.id;
+      if (!courseId) { toast('Open an enrolled course before starting a focus session.'); return; }
+      try {
+        const response = await lmsApi.student.startStudySession({ courseId, startedAt: new Date().toISOString() });
+        sessionIdRef.current = extractId(response);
+        if (!sessionIdRef.current) throw new Error('The API did not return the study session ID.');
+      } catch (failure) { toast(failure instanceof Error ? failure.message : 'Could not start a study session.'); return; }
+    }
+    setRunning(true);
+  }, [courses, running, toast]);
 
   useEffect(() => {
     if (!running) return;
@@ -29,13 +56,14 @@ export function Study() {
         if (l <= 1) {
           setRunning(false);
           toastRef.current('Focus session done. Take a 5 minute break.');
+          void completeFocus(TOTAL);
           return TOTAL;
         }
         return l - 1;
       });
     }, 1000);
     return () => window.clearInterval(id);
-  }, [running]);
+  }, [completeFocus, running]);
 
   const addNote = () => {
     const text = draft.trim();
@@ -50,7 +78,7 @@ export function Study() {
     <View>
       <div className={studyGrid}>
         <div>
-          <Player />
+          {replays.length ? <Player /> : <EmptyState icon="play" title="No study recording selected" description="Linked course recordings will appear here for focused study." compact />}
           <div className="mt-[22px] flex items-center gap-[22px] rounded-[20px] bg-surface-2 px-[22px] py-[18px]">
             <div className="relative size-[92px] shrink-0">
               <svg className="size-[92px] -rotate-90" viewBox="0 0 92 92" aria-hidden="true">
@@ -71,7 +99,7 @@ export function Study() {
                 <span className={muted}>25 minutes, then a short break.</span>
               </p>
               <div className="flex flex-wrap gap-2">
-                <button type="button" className={buttonSmall} onClick={() => setRunning((r) => !r)}>
+                <button type="button" className={buttonSmall} onClick={() => void toggleFocus()}>
                   {running ? 'Pause' : left < TOTAL ? 'Resume focus' : 'Start focus'}
                 </button>
                 <button
@@ -79,6 +107,7 @@ export function Study() {
                   className={buttonGhostSmall}
                   onClick={() => {
                     setRunning(false);
+                    void completeFocus(TOTAL - left);
                     setLeft(TOTAL);
                   }}>
                   
@@ -91,7 +120,7 @@ export function Study() {
 
         <div>
           <h3 className={heading}>Notes</h3>
-          <div className="grid gap-2.5">
+          {replays.length ? <><div className="grid gap-2.5">
             <textarea
               className={textarea}
               value={draft}
@@ -122,7 +151,7 @@ export function Study() {
                 <p>{n.text}</p>
               </div>
             )}
-          </div>
+          </div></> : <EmptyState icon="pen" title="No recording notes yet" description="Select an available recording to create timestamped notes." compact />}
         </div>
       </div>
     </View>);

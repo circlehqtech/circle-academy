@@ -1,20 +1,22 @@
 import React from 'react';
 import { Icon } from './Icon';
-import { REPLAYS } from '../data/lms';
 import { usePlayer } from '../contexts/PlayerContext';
 import { fmt } from '../utils/format';
 import { muted } from '../styles';
+import { EmptyState } from './ui/EmptyState';
 
 interface ReplayListProps {
   onSelect: (id: string) => void;
 }
 
 export function ReplayList({ onSelect }: ReplayListProps) {
-  const { replay } = usePlayer();
+  const { replay, replays } = usePlayer();
+
+  if (!replays.length) return <EmptyState icon="play" title="No recordings yet" description="Course recordings will appear here after an external recording link is attached." compact />;
 
   return (
     <div>
-      {REPLAYS.map((r) =>
+      {replays.map((r) =>
       <button
         key={r.id}
         type="button"

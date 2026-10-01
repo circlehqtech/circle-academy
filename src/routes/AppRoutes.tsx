@@ -16,7 +16,7 @@ import {
 } from "./StudentRoutes";
 import {
   FacilitatorClassesPage,
-  FacilitatorResults,
+  FacilitatorAssessmentResultsPage,
   FacilitatorReviewRoute,
   FacilitatorStudents,
   FacilitatorTeachingRoute,
@@ -31,6 +31,7 @@ import {
   CohortsPage,
   ClassesPage,
   AssessmentsPage,
+  StudentProfilePage,
 } from "./AdminRoutes";
 import { ProfileRoute } from "./ProfileRoute";
 
@@ -62,6 +63,7 @@ export function AppRoutes({
             <Route path="live" element={<LiveReplaysRoute />} />
             <Route path="live/:replayId" element={<LiveReplaysRoute />} />
             <Route path="assignments" element={<StudentAssignments />} />
+            <Route path="assessments/*" element={<Navigate to="/student/courses" replace />} />
             <Route path="study" element={<Study />} />
             <Route path="certificates" element={<Certificates />} />
             <Route path="profile" element={<ProfileRoute />} />
@@ -74,7 +76,7 @@ export function AppRoutes({
             <Route path="teaching" element={<FacilitatorTeachingRoute />} />
             <Route path="reviews" element={<FacilitatorReviewRoute />} />
             <Route path="students" element={<FacilitatorStudents />} />
-            <Route path="results" element={<FacilitatorResults />} />
+            <Route path="results" element={<FacilitatorAssessmentResultsPage />} />
             <Route path="classes" element={<FacilitatorClassesPage />} />
             <Route path="profile" element={<ProfileRoute />} />
           </Route>
@@ -88,8 +90,9 @@ export function AppRoutes({
             <Route path="courses/new" element={<CourseBuilderRoute />} />
             <Route path="courses/:courseId/edit" element={<CourseBuilderRoute />} />
             <Route path="people" element={<AdminPeople />} />
+            <Route path="people/students/:studentId" element={<StudentProfilePage />} />
             <Route path="cohorts" element={<CohortsPage />} />
-            <Route path="content" element={<AdminOperations section="content" />} />
+            <Route path="content" element={<Navigate to="/admin/courses" replace />} />
             <Route path="classes" element={<ClassesPage />} />
             <Route path="assessments" element={<AssessmentsPage />} />
             <Route path="projects" element={<AdminOperations section="projects" />} />

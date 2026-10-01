@@ -63,6 +63,7 @@ export const TITLES: Record<ViewId, string> = {
   live: 'Live classes and replays',
   study: 'Study session',
   assignments: 'Assignments and projects',
+  studentAssessments: 'Assessments',
   certs: 'Certificates',
   profile: 'Profile and settings',
   teaching: 'Your courses and students',

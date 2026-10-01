@@ -3,6 +3,7 @@ import type {
   Announcement,
   Session,
   Submission,
+  SubmissionDraftInput,
   SubmissionStatus,
 } from "../../types/lms";
 import type {
@@ -12,10 +13,14 @@ import type {
   FacilitatorRecord,
   LiveClassRecord,
   ManagedCourse,
+  ManagedModule,
   StudentRecord,
 } from "../../types/workspace";
 
 export interface WorkspaceContextValue {
+  isLoading: boolean;
+  isError: boolean;
+  refreshWorkspace: () => void;
   announcements: Announcement[];
   announcementPanelOpen: boolean;
   openAnnouncementPanel: () => void;
@@ -23,7 +28,11 @@ export interface WorkspaceContextValue {
   toggleAnnouncementPanel: () => void;
   markAllAnnouncementsRead: () => void;
   sessions: Session[];
-  attachRecording: (index: number) => void;
+  attachRecording: (
+    index: number,
+    recordingUrl: string,
+    recordingDurationSeconds?: number,
+  ) => Promise<boolean>;
   dropRecording: () => void;
   submissions: Submission[];
   decideSubmission: (
@@ -34,19 +43,22 @@ export interface WorkspaceContextValue {
   createdCourses: string[];
   addCreatedCourse: (title: string) => void;
   courses: ManagedCourse[];
-  saveCourse: (course: CourseInput) => string;
+  saveCourseDetails: (course: CourseInput) => Promise<string>;
+  saveCourseCurriculum: (courseId: string, modules: ManagedModule[], previousModules: ManagedModule[], course: CourseInput) => Promise<{ courseId: string; modules: ManagedModule[] } | null>;
+  saveCourseFacilitators: (courseId: string, facilitatorIds: string[]) => Promise<boolean>;
+  setCourseStatus: (courseId: string, status: CourseInput["status"]) => Promise<boolean>;
   duplicateCourse: (courseId: string) => void;
   archiveCourse: (courseId: string) => void;
   facilitators: FacilitatorRecord[];
-  saveFacilitator: (facilitator: Omit<FacilitatorRecord, "id" | "lastActive" | "status"> & { id?: string }) => string;
+  saveFacilitator: (facilitator: Omit<FacilitatorRecord, "id" | "lastActive" | "status"> & { id?: string }) => Promise<boolean>;
   students: StudentRecord[];
-  saveStudent: (student: Omit<StudentRecord, "id" | "lastActive" | "learningStatus"> & { id?: string }) => string;
+  saveStudent: (student: Omit<StudentRecord, "id" | "lastActive" | "learningStatus"> & { id?: string }) => Promise<boolean>;
   cohorts: CohortRecord[];
-  saveCohort: (cohort: Omit<CohortRecord, "id"> & { id?: string }) => string;
+  saveCohort: (cohort: Omit<CohortRecord, "id"> & { id?: string }) => Promise<string | null>;
   duplicateCohort: (cohortId: string) => void;
   archiveCohort: (cohortId: string) => void;
   liveClasses: LiveClassRecord[];
-  saveLiveClass: (liveClass: Omit<LiveClassRecord, "id"> & { id?: string }) => string;
+  saveLiveClass: (liveClass: Omit<LiveClassRecord, "id"> & { id?: string }) => Promise<boolean>;
   startLiveClass: (classId: string) => void;
   duplicateLiveClass: (classId: string) => void;
   cancelLiveClass: (classId: string) => void;
@@ -54,7 +66,7 @@ export interface WorkspaceContextValue {
   saveAssessment: (assessment: Omit<AssessmentRecord, "id"> & { id?: string }) => string;
   duplicateAssessment: (assessmentId: string) => void;
   archiveAssessment: (assessmentId: string) => void;
-  addSubmission: (submission: Submission) => void;
+  addSubmission: (submission: SubmissionDraftInput) => Promise<boolean>;
 }
 
 export const WorkspaceContext =

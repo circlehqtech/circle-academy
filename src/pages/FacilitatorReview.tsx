@@ -4,6 +4,7 @@ import { Icon } from '../components/Icon';
 import { useToast } from '../contexts/ToastContext';
 import type { Submission, SubmissionStatus } from '../types/lms';
 import { button, buttonGhost, courseGrid, courseListButton, heading, infoList, muted, panel, status, statusMiss, statusSoft, textarea } from '../styles';
+import { EmptyState } from '../components/ui/EmptyState';
 
 interface FacilitatorReviewProps {
   submissions: Submission[];
@@ -23,7 +24,7 @@ export function FacilitatorReview({ submissions, onDecide }: FacilitatorReviewPr
   const current = submissions.find((s) => s.id === selectedId) ?? submissions[0];
   const [feedback, setFeedback] = useState(current?.feedback ?? '');
 
-  if (!current) return null;
+  if (!current) return <View><EmptyState icon="check" title="Review queue is clear" description="Student submissions that need approval or revision feedback will appear here." /></View>;
 
   const decide = (status: SubmissionStatus) => {
     const text = feedback.trim();

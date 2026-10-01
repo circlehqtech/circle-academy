@@ -7,6 +7,7 @@ import { AdminRecordings } from "../pages/AdminRecordings";
 import { CohortsPage } from "../pages/admin/CohortsPage";
 import { ClassesPage } from "../pages/admin/ClassesPage";
 import { AssessmentsPage } from "../pages/admin/AssessmentsPage";
+import { StudentProfilePage } from "../pages/admin/StudentProfilePage";
 import { useWorkspace } from "../features/workspace/useWorkspace";
 
 export function AdminOverviewRoute() {
@@ -36,7 +37,7 @@ export function AdminCoursesRoute() {
 export function CourseBuilderRoute() {
   const navigate = useNavigate();
   const { courseId } = useParams();
-  const { courses, facilitators, cohorts, saveCourse } = useWorkspace();
+  const { courses, facilitators, cohorts, saveCourseDetails, saveCourseCurriculum, saveCourseFacilitators, setCourseStatus } = useWorkspace();
   const initialCourse = courses.find((course) => course.id === courseId);
 
   return (
@@ -45,20 +46,22 @@ export function CourseBuilderRoute() {
       facilitators={facilitators}
       cohorts={cohorts}
       onBack={() => navigate("/admin/courses")}
-      onSave={saveCourse}
+      onSaveDetails={saveCourseDetails}
+      onSaveCurriculum={saveCourseCurriculum}
+      onSaveFacilitators={saveCourseFacilitators}
+      onSetStatus={setCourseStatus}
     />
   );
 }
 
 export function AdminRecordingsRoute() {
-  const { sessions, attachRecording, dropRecording } = useWorkspace();
+  const { sessions, attachRecording } = useWorkspace();
   return (
     <AdminRecordings
       sessions={sessions}
       onAttach={attachRecording}
-      onDrop={dropRecording}
     />
   );
 }
 
-export { AdminOperations, AdminPeople, CohortsPage, ClassesPage, AssessmentsPage };
+export { AdminOperations, AdminPeople, CohortsPage, ClassesPage, AssessmentsPage, StudentProfilePage };

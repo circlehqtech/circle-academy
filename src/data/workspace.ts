@@ -127,9 +127,9 @@ export const INITIAL_STUDENTS: StudentRecord[] = [
 ];
 
 export const INITIAL_COHORTS: CohortRecord[] = [
-  { id: "cohort-7", name: "Cohort 7", starts: "2026-09-01", ends: "2026-10-16", studentCount: 43, courseIds: ["react", "ts"], facilitatorIds: ["fac-kemi", "fac-amaka"], status: "Active" },
-  { id: "cohort-8", name: "Cohort 8", starts: "2026-10-05", ends: "2026-11-20", studentCount: 18, courseIds: ["react", "ts", "product-discovery"], facilitatorIds: ["fac-kemi"], status: "Enrolling" },
-  { id: "cohort-6", name: "Cohort 6", starts: "2026-07-06", ends: "2026-08-21", studentCount: 31, courseIds: ["ds"], facilitatorIds: ["fac-amaka"], status: "Completed" },
+  { id: "cohort-7", name: "Cohort 7", starts: "2026-09-01", ends: "2026-10-16", studentCount: 43, studentCap: null, enrollmentOpensAt: "", enrollmentClosesAt: "", allowAdminEnrollmentAfterClose: true, courseIds: ["react", "ts"], facilitatorIds: ["fac-kemi", "fac-amaka"], status: "Active" },
+  { id: "cohort-8", name: "Cohort 8", starts: "2026-10-05", ends: "2026-11-20", studentCount: 18, studentCap: null, enrollmentOpensAt: "", enrollmentClosesAt: "", allowAdminEnrollmentAfterClose: true, courseIds: ["react", "ts", "product-discovery"], facilitatorIds: ["fac-kemi"], status: "Enrolling" },
+  { id: "cohort-6", name: "Cohort 6", starts: "2026-07-06", ends: "2026-08-21", studentCount: 31, studentCap: null, enrollmentOpensAt: "", enrollmentClosesAt: "", allowAdminEnrollmentAfterClose: true, courseIds: ["ds"], facilitatorIds: ["fac-amaka"], status: "Completed" },
 ];
 
 export const INITIAL_CLASSES: LiveClassRecord[] = [

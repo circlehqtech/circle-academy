@@ -1,15 +1,17 @@
 import React from 'react';
 import { View } from '../components/View';
 import { ProgressRing } from '../components/ProgressRing';
-import { CLASS_ACTIVITIES, ROSTER } from '../data/lms';
 import { useToast } from '../contexts/ToastContext';
-import type { AssignedCourse, RosterStudent } from '../types/lms';
-import { agenda, art, artTone, buttonGhostSmall, buttonSmall, heading, homeGrid, linkButton, muted, pin, progressBar, row, status as baseStatus, statusMiss, statusSoft, tile, tileBody, tiles } from '../styles';
+import type { AssignedCourse, ClassActivity, RosterStudent } from '../types/lms';
+import { agenda, art, artTone, buttonGhostSmall, buttonSmall, heading, homeGrid, progressBar, row, status as baseStatus, statusMiss, statusSoft, tile, tileBody, tiles } from '../styles';
+import { EmptyState } from '../components/ui/EmptyState';
 
 interface FacilitatorTeachingProps {
   assignedCourses: AssignedCourse[];
   pending: number;
   finalProjects: number;
+  roster: RosterStudent[];
+  activities: ClassActivity[];
   onOpenReview: () => void;
 }
 
@@ -23,6 +25,8 @@ export function FacilitatorTeaching({
   assignedCourses,
   pending,
   finalProjects,
+  roster,
+  activities,
   onOpenReview
 }: FacilitatorTeachingProps) {
   const { toast } = useToast();
@@ -34,18 +38,18 @@ export function FacilitatorTeaching({
         <div className="ticket-main">
           <p className="inline-flex items-center gap-[9px] text-[15px] font-[650]">
             <i className="size-2.5 animate-live-pulse rounded-full bg-white" aria-hidden="true" />
-            Waiting on you
+            {pending ? 'Waiting on you' : 'Review queue'}
           </p>
-          <h2 className="ticket-title">{pending === 1 ? '1 submission to review' : `${pending} submissions to review`}</h2>
+          <h2 className="ticket-title">{pending === 0 ? 'No submissions waiting' : pending === 1 ? '1 submission to review' : `${pending} submissions to review`}</h2>
           <p className="max-w-[44ch] opacity-90">
-            {finalProjects > 0 ?
+            {pending === 0 ? 'New student work will appear here as soon as it is submitted.' : finalProjects > 0 ?
             `${finalProjects} of them are final projects, so approving one completes that student's course.` :
-            'Every final project is cleared. What is left are assignments and checkpoints.'}
+            'The remaining work contains assignments and checkpoints.'}
           </p>
           <div className="mt-5 flex flex-wrap gap-2 [&>span]:rounded-[99px] [&>span]:bg-black/20 [&>span]:px-[13px] [&>span]:py-1.5 [&>span]:text-[13.5px] [&>span]:font-[550]">
             <span>{assignedCourses.length} assigned courses</span>
             <span>{students} students</span>
-            <span>Cohort 7</span>
+            <span>{activities.length} scheduled {activities.length === 1 ? 'class' : 'classes'}</span>
           </div>
         </div>
         <div className="ticket-stub">
@@ -60,7 +64,7 @@ export function FacilitatorTeaching({
       <div className={homeGrid}>
         <section>
           <h3 className={heading}>Assigned courses</h3>
-          <div className={`${tiles} mb-9`}>
+          {assignedCourses.length ? <div className={`${tiles} mb-9`}>
             {assignedCourses.map((c) =>
             <div key={c.id} className={tile}>
                 <span className={`${art} ${artTone[c.art]}`} aria-hidden="true">
@@ -80,11 +84,11 @@ export function FacilitatorTeaching({
                 </span>
               </div>
             )}
-          </div>
+          </div> : <EmptyState icon="book" title="No assigned courses" description="Courses assigned to you will appear here with enrolment and progress information." compact className="mb-9" />}
 
           <h3 className={heading}>Student progress</h3>
-          <div>
-            {ROSTER.map((s) =>
+          {roster.length ? <div>
+            {roster.map((s) =>
             <div key={s.name} className={row}>
                 <ProgressRing value={s.p} />
                 <span>
@@ -110,13 +114,13 @@ export function FacilitatorTeaching({
                 </button>
               </div>
             )}
-          </div>
+          </div> : <EmptyState icon="users" title="No students assigned" description="Students enrolled in your assigned courses will appear here." compact />}
         </section>
 
         <section>
           <h3 className={heading}>Class activities</h3>
-          <ul className={agenda}>
-            {CLASS_ACTIVITIES.map((a) =>
+          {activities.length ? <ul className={agenda}>
+            {activities.map((a) =>
             <li key={a.title}>
                 <div>
                   <b>{a.title}</b>
@@ -131,17 +135,7 @@ export function FacilitatorTeaching({
                 </button>
               </li>
             )}
-          </ul>
-
-          <div className={pin}>
-            <b>Amina Yusuf resubmitted assignment 4</b>
-            <span className={muted}>Second attempt, after your revision request</span>
-            <div className="mt-2.5">
-              <button type="button" className={linkButton} onClick={onOpenReview}>
-                Review it now
-              </button>
-            </div>
-          </div>
+          </ul> : <EmptyState icon="video" title="No class activity" description="Upcoming and completed classes for your assigned courses will appear here." compact />}
         </section>
       </div>
     </View>);

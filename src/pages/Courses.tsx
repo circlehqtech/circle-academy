@@ -2,6 +2,7 @@ import React from 'react';
 import { View } from '../components/View';
 import type { Course } from '../types/lms';
 import { art, artTone, progressBar, tag, tile, tileBody, tiles } from '../styles';
+import { EmptyState } from '../components/ui/EmptyState';
 
 interface CoursesProps {
   courses: Course[];
@@ -11,7 +12,7 @@ interface CoursesProps {
 export function Courses({ courses, onOpenCourse }: CoursesProps) {
   return (
     <View>
-      <div className={tiles}>
+      {courses.length ? <div className={tiles}>
         {courses.map((c) =>
         <button key={c.id} type="button" className={tile} onClick={() => onOpenCourse(c.id)}>
             <span className={`${art} ${artTone[c.art]}`} aria-hidden="true">
@@ -32,7 +33,7 @@ export function Courses({ courses, onOpenCourse }: CoursesProps) {
             </span>
           </button>
         )}
-      </div>
+      </div> : <EmptyState icon="book" title="No courses yet" description="Courses you are enrolled in will appear here with lessons and progress." />}
     </View>);
 
 }

@@ -2,6 +2,7 @@ import { Link } from "react-router-dom";
 import { useAuth } from "../features/auth/useAuth";
 import { ROLE_HOME } from "../routes/routeConfig";
 import { button } from "../styles";
+import { Logo } from "../components/Logo";
 
 export function NotFound() {
   const { role } = useAuth();
@@ -10,6 +11,9 @@ export function NotFound() {
   return (
     <main className="grid min-h-screen place-items-center bg-background px-5 text-foreground">
       <div className="max-w-lg text-center">
+        <div className="mb-8 flex justify-center">
+          <Logo subtitle="Learn" size="lg" />
+        </div>
         <p className="text-sm font-semibold text-accent-text">404</p>
         <h1 className="mt-2 text-4xl font-[750] tracking-[-0.035em]">
           This page does not exist

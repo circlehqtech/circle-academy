@@ -88,12 +88,6 @@ export const ROLE_NAVIGATION: Record<Role, NavItem[]> = {
       path: "/admin/cohorts",
     },
     {
-      id: "content",
-      label: "Content",
-      icon: "upload",
-      path: "/admin/content",
-    },
-    {
       id: "adminClasses",
       label: "Classes",
       icon: "video",

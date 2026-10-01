@@ -185,6 +185,7 @@ export function WorkspaceProvider({ children }: { children: ReactNode }) {
   }, [refresh, toast]);
 
   const markAllAnnouncementsRead = useCallback(() => void run(() => lmsApi.announcements.markAllRead(), "Announcements marked as read."), [run]);
+  const markAnnouncementRead = useCallback((announcementId: string) => void run(() => lmsApi.announcements.markRead(announcementId), "Announcement marked as read."), [run]);
   const saveCourseDetails = useCallback(async (course: CourseInput) => {
     let savedCourseId = course.id ?? "";
     try {
@@ -463,11 +464,11 @@ export function WorkspaceProvider({ children }: { children: ReactNode }) {
     isLoading: workspaceQuery.isPending,
     isError: workspaceQuery.isError,
     refreshWorkspace: () => { void refresh(); },
-    announcements, announcementPanelOpen, openAnnouncementPanel: () => setAnnouncementPanelOpen(true), closeAnnouncementPanel: () => setAnnouncementPanelOpen(false), toggleAnnouncementPanel: () => setAnnouncementPanelOpen((open) => !open), markAllAnnouncementsRead,
+    announcements, announcementPanelOpen, openAnnouncementPanel: () => setAnnouncementPanelOpen(true), closeAnnouncementPanel: () => setAnnouncementPanelOpen(false), toggleAnnouncementPanel: () => setAnnouncementPanelOpen((open) => !open), markAnnouncementRead, markAllAnnouncementsRead,
     sessions: sessions as Session[], attachRecording, dropRecording: unavailableRecording,
     submissions, decideSubmission, createdCourses: [], addCreatedCourse: () => undefined,
     courses, saveCourseDetails, saveCourseCurriculum, saveCourseFacilitators, setCourseStatus, duplicateCourse, archiveCourse, facilitators, saveFacilitator, students, saveStudent, cohorts, saveCohort, duplicateCohort, archiveCohort,
     liveClasses, saveLiveClass, startLiveClass, duplicateLiveClass, cancelLiveClass, assessments, saveAssessment, duplicateAssessment, archiveAssessment, addSubmission,
-  }), [workspaceQuery.isPending, workspaceQuery.isError, refresh, announcements, announcementPanelOpen, markAllAnnouncementsRead, sessions, attachRecording, unavailableRecording, submissions, decideSubmission, courses, saveCourseDetails, saveCourseCurriculum, saveCourseFacilitators, setCourseStatus, duplicateCourse, archiveCourse, facilitators, saveFacilitator, students, saveStudent, cohorts, saveCohort, duplicateCohort, archiveCohort, liveClasses, saveLiveClass, startLiveClass, duplicateLiveClass, cancelLiveClass, assessments, saveAssessment, duplicateAssessment, archiveAssessment, addSubmission]);
+  }), [workspaceQuery.isPending, workspaceQuery.isError, refresh, announcements, announcementPanelOpen, markAnnouncementRead, markAllAnnouncementsRead, sessions, attachRecording, unavailableRecording, submissions, decideSubmission, courses, saveCourseDetails, saveCourseCurriculum, saveCourseFacilitators, setCourseStatus, duplicateCourse, archiveCourse, facilitators, saveFacilitator, students, saveStudent, cohorts, saveCohort, duplicateCohort, archiveCohort, liveClasses, saveLiveClass, startLiveClass, duplicateLiveClass, cancelLiveClass, assessments, saveAssessment, duplicateAssessment, archiveAssessment, addSubmission]);
   return <WorkspaceContext.Provider value={value}>{children}</WorkspaceContext.Provider>;
 }

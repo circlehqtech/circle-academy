@@ -24,6 +24,7 @@ export type ViewId =
 'adminClasses' |
 'assessments' |
 'projects' |
+'announcements' |
 'adminCerts' |
 'recs';
 
@@ -47,6 +48,7 @@ export interface Replay {
 }
 
 export interface Announcement {
+  id?: string;
   t: string;
   m: string;
   unread: boolean;
@@ -89,7 +91,7 @@ export interface Session {
 export interface NavItem {
   id: ViewId;
   label: string;
-  icon: 'home' | 'book' | 'video' | 'pen' | 'award' | 'chart' | 'upload' | 'users' | 'inbox';
+  icon: 'home' | 'book' | 'video' | 'pen' | 'award' | 'chart' | 'upload' | 'users' | 'inbox' | 'bell';
   path: string;
 }
 

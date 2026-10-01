@@ -7,6 +7,7 @@ import { AdminRecordings } from "../pages/AdminRecordings";
 import { CohortsPage } from "../pages/admin/CohortsPage";
 import { ClassesPage } from "../pages/admin/ClassesPage";
 import { AssessmentsPage } from "../pages/admin/AssessmentsPage";
+import { AnnouncementsPage } from "../pages/admin/AnnouncementsPage";
 import { StudentProfilePage } from "../pages/admin/StudentProfilePage";
 import { useWorkspace } from "../features/workspace/useWorkspace";
 
@@ -64,4 +65,4 @@ export function AdminRecordingsRoute() {
   );
 }
 
-export { AdminOperations, AdminPeople, CohortsPage, ClassesPage, AssessmentsPage, StudentProfilePage };
+export { AdminOperations, AdminPeople, CohortsPage, ClassesPage, AssessmentsPage, AnnouncementsPage, StudentProfilePage };

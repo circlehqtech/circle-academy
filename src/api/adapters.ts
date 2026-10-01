@@ -240,8 +240,17 @@ export function toSubmission(value: unknown): Submission {
 }
 
 export function toAnnouncement(value: unknown): Announcement & { id?: string } {
-  const record = asRecord(value);
-  return { id: id(record), t: string(record.title, "Announcement"), m: string(record.body ?? record.message), unread: !record.readAt };
+  const wrapper = asRecord(value);
+  const nested = asRecord(wrapper.announcement);
+  const record = Object.keys(nested).length ? nested : wrapper;
+  const readState = wrapper.isRead ?? wrapper.read ?? record.isRead ?? record.read;
+  const readAt = wrapper.readAt ?? record.readAt;
+  return {
+    id: id(record),
+    t: string(record.title, "Announcement"),
+    m: string(record.body ?? record.message),
+    unread: typeof readState === "boolean" ? !readState : !readAt,
+  };
 }
 
 export function toSession(value: unknown): Session & { duration?: number; seen?: number } {

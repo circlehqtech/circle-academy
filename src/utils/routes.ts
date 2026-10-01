@@ -23,6 +23,7 @@ const PATH_VIEW_MAP: Array<[RegExp, ViewId]> = [
   [/^\/admin\/classes$/, "adminClasses"],
   [/^\/admin\/assessments$/, "assessments"],
   [/^\/admin\/projects$/, "projects"],
+  [/^\/admin\/announcements$/, "announcements"],
   [/^\/admin\/certificates$/, "adminCerts"],
   [/^\/admin\/recordings$/, "recs"],
   [/^\/(?:student|facilitator|admin)\/profile$/, "profile"],

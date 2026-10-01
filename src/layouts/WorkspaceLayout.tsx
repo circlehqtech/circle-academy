@@ -26,6 +26,7 @@ export function WorkspaceLayout({
     announcementPanelOpen,
     toggleAnnouncementPanel,
     closeAnnouncementPanel,
+    markAnnouncementRead,
     markAllAnnouncementsRead,
     courses,
     isLoading,
@@ -78,6 +79,7 @@ export function WorkspaceLayout({
           panelOpen={announcementPanelOpen}
           onTogglePanel={toggleAnnouncementPanel}
           onClosePanel={closeAnnouncementPanel}
+          onRead={markAnnouncementRead}
           onReadAll={markAllAnnouncementsRead}
           onOpenProfile={() => navigate(`/${role}/profile`)}
           onToggleTheme={toggleTheme}

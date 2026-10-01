@@ -80,6 +80,7 @@ export const TITLES: Record<ViewId, string> = {
   adminClasses: 'Live classes',
   assessments: 'Assessments and checkpoints',
   projects: 'Assignments and projects',
+  announcements: 'Announcements',
   adminCerts: 'Certificate management',
   recs: 'Recordings'
 };

@@ -31,6 +31,7 @@ import {
   CohortsPage,
   ClassesPage,
   AssessmentsPage,
+  AnnouncementsPage,
   StudentProfilePage,
 } from "./AdminRoutes";
 import { ProfileRoute } from "./ProfileRoute";
@@ -95,6 +96,7 @@ export function AppRoutes({
             <Route path="content" element={<Navigate to="/admin/courses" replace />} />
             <Route path="classes" element={<ClassesPage />} />
             <Route path="assessments" element={<AssessmentsPage />} />
+            <Route path="announcements" element={<AnnouncementsPage />} />
             <Route path="projects" element={<AdminOperations section="projects" />} />
             <Route path="certificates" element={<AdminOperations section="adminCerts" />} />
             <Route path="recordings" element={<AdminRecordingsRoute />} />

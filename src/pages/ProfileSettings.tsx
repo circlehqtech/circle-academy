@@ -11,7 +11,7 @@ import { useChangePassword, useUpdateProfile } from '../api/auth';
 import { useWorkspace } from '../features/workspace/useWorkspace';
 import { EmptyState } from '../components/ui/EmptyState';
 
-type ProfileTab = 'profile' | 'security' | 'notifications' | 'learning';
+type ProfileTab = 'profile' | 'security' | 'learning';
 
 export function ProfileSettings({ role, onLogout }: { role: Role; onLogout: () => void }) {
   const { toast } = useToast();
@@ -25,6 +25,9 @@ export function ProfileSettings({ role, onLogout }: { role: Role; onLogout: () =
   const photoInput = useRef<HTMLInputElement>(null);
   const profileName = `${account?.firstName ?? ''} ${account?.lastName ?? ''}`.trim() || 'HQ Learn user';
   const initials = profileName.split(/\s+/).map((part) => part[0]).join('').slice(0, 2).toUpperCase();
+  const profileTabs: Array<[ProfileTab, string]> = role === 'student'
+    ? [['profile', 'Personal profile'], ['security', 'Account & security'], ['learning', 'Learning & enrolment']]
+    : [['profile', 'Personal profile'], ['security', 'Account & security']];
   const uploadPhoto = async (file?: File) => {
     if (!file) return;
     if (!file.type.startsWith('image/')) { toast('Choose an image file for your profile photo.'); return; }
@@ -75,7 +78,7 @@ export function ProfileSettings({ role, onLogout }: { role: Role; onLogout: () =
       </div>
 
       <div className={tabs} role="tablist">
-        {([['profile', 'Personal profile'], ['security', 'Account & security'], ['notifications', 'Notifications'], ['learning', 'Learning & enrolment']] as [ProfileTab, string][]).map(([id, label]) => <button key={id} className={tabButton} type="button" role="tab" aria-selected={tab === id} onClick={() => setTab(id)}>{label}</button>)}
+        {profileTabs.map(([id, label]) => <button key={id} className={tabButton} type="button" role="tab" aria-selected={tab === id} onClick={() => setTab(id)}>{label}</button>)}
       </div>
 
       <div className="mt-7 max-w-[760px]">
@@ -93,16 +96,6 @@ export function ProfileSettings({ role, onLogout }: { role: Role; onLogout: () =
           <section className={card}><h3 className="font-[650]">Active sessions</h3><div className="mt-4 flex items-center justify-between gap-4 border-t border-line pt-4"><div><b className="block">Current session</b><span className="text-sm text-muted">This device</span></div><span className="text-xs font-semibold text-muted">Active now</span></div></section>
           <button className="flex items-center gap-2 font-semibold text-accent-text" type="button" onClick={onLogout}><Icon name="logout" />Sign out of HQ Learn</button>
         </div>}
-
-        {tab === 'notifications' && <form className="grid gap-4" onSubmit={save('Notification preferences saved.')}>
-          {[
-            ['Learning reminders', 'Deadlines, next lessons, and weekly progress summaries.'],
-            ['Live classes', 'Class reminders, schedule changes, and recording availability.'],
-            ['Feedback and reviews', 'Facilitator comments, approvals, and revision requests.'],
-            ['Community updates', 'Course announcements and Circle HQ Academy news.'],
-          ].map(([title, description], index) => <label key={title} className={`${card} flex items-start gap-4`}><input className="mt-1 size-4 accent-[var(--accent)]" type="checkbox" defaultChecked={index < 3} /><span className="flex-1"><b className="block">{title}</b><span className="text-sm text-muted">{description}</span></span><CustomSelect className="rounded-lg border border-line bg-background px-2 py-1 text-xs" defaultValue="email"><option value="email">Email + in-app</option><option>In-app only</option><option>Off</option></CustomSelect></label>)}
-          <div><button className={button} type="submit">Save preferences</button></div>
-        </form>}
 
         {tab === 'learning' && <div className="grid gap-5">
           <section className={card}><h3 className="text-lg font-[650]">{role === 'student' ? 'Enrolled courses' : 'Workspace courses'}</h3>{courses.length ? <div className="mt-4 grid gap-4">{courses.map((course) => <div key={course.id} className="flex items-center justify-between gap-4 border-t border-line pt-4 first:border-t-0 first:pt-0"><div><b className="block">{course.title}</b><span className="text-sm text-muted">{course.status} · {course.modules.length} modules</span></div><span className="font-semibold">{course.progress}%</span></div>)}</div> : <EmptyState icon="book" title="No courses yet" description={role === 'student' ? 'Courses you are enrolled in will appear here.' : 'Courses available in this workspace will appear here.'} compact className="mt-4 border-0 bg-transparent" />}</section>

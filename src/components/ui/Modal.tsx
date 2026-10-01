@@ -40,6 +40,9 @@ export function Modal({ children, title, subtitle, onClose, size = "default", bu
       aria-modal="true"
       aria-labelledby={titleId}
       aria-busy={busy}
+      onPointerDown={(event) => {
+        if (event.target === event.currentTarget && !busy) onClose();
+      }}
     >
       <div className={`flex min-h-0 w-full flex-col overflow-hidden rounded-[22px] bg-background shadow-2xl ${panelSizes[size]}`}>
         <div className="flex shrink-0 items-start justify-between gap-4 border-b border-line px-5 py-4 sm:px-6 sm:py-5">

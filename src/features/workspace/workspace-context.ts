@@ -26,6 +26,7 @@ export interface WorkspaceContextValue {
   openAnnouncementPanel: () => void;
   closeAnnouncementPanel: () => void;
   toggleAnnouncementPanel: () => void;
+  markAnnouncementRead: (announcementId: string) => void;
   markAllAnnouncementsRead: () => void;
   sessions: Session[];
   attachRecording: (

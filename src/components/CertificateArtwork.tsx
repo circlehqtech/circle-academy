@@ -66,7 +66,7 @@ export function CertificateArtwork({
           <p className="text-[1.35cqw] tracking-[0.13em] text-[#726657] uppercase">
             This certificate is proudly presented to
           </p>
-          <h2 className="mt-[1.15cqw] max-w-[85%] text-[5.3cqw] leading-[1.05] font-[760] tracking-[-0.045em] [overflow-wrap:anywhere]">
+          <h2 className="mt-[1.15cqw] max-w-[85%] text-[5.3cqw] leading-[1.05] font-[760] tracking-[-0.045em] wrap-anywhere">
             {recipientName}
           </h2>
           <div className="my-[1.35cqw] flex items-center gap-[0.8cqw]">
